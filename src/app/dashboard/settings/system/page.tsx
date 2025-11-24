@@ -305,21 +305,21 @@ export default function SystemPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
-                <p className="text-gray-600">Configure security and backup settings</p>
+                <h1 className="text-2xl font-bold text-foreground">System Settings</h1>
+                <p className="text-muted-foreground">Configure security and backup settings</p>
             </div>
 
             {/* Tabs */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="border-b border-gray-200">
+            <div className="bg-card rounded-lg border border-border shadow-sm">
+                <div className="border-b border-border">
                     <nav className="flex space-x-8 px-6">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${activeTab === tab.id
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-primary text-blue-600'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-input'
                                     }`}
                             >
                                 <span className="mr-2">{tab.icon}</span>
@@ -333,11 +333,11 @@ export default function SystemPage() {
                     {/* Security Settings */}
                     {activeTab === 'security' && (
                         <div className="space-y-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
+                            <h3 className="text-lg font-medium text-foreground mb-4">Change Password</h3>
 
                             <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">
                                         Current Password <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -345,12 +345,12 @@ export default function SystemPage() {
                                         value={passwordForm.currentPassword}
                                         onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
                                         required
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        className="w-full border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">
                                         New Password <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -359,13 +359,13 @@ export default function SystemPage() {
                                         onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                                         required
                                         minLength={6}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        className="w-full border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Minimum 6 characters</p>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">
                                         Confirm New Password <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -373,7 +373,7 @@ export default function SystemPage() {
                                         value={passwordForm.confirmPassword}
                                         onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
                                         required
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        className="w-full border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                                     />
                                 </div>
 
@@ -402,7 +402,7 @@ export default function SystemPage() {
                                 <button
                                     type="submit"
                                     disabled={passwordLoading}
-                                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
+                                    className="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
                                 >
                                     {passwordLoading && (
                                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -419,19 +419,19 @@ export default function SystemPage() {
                     {/* Backup & Export */}
                     {activeTab === 'backup' && (
                         <div className="space-y-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Database Export</h3>
+                            <h3 className="text-lg font-medium text-foreground mb-4">Database Export</h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Complete Database */}
-                                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                                <div className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h4 className="font-medium text-gray-900">Complete Database</h4>
-                                            <p className="text-sm text-gray-600 mt-1">Export all tables and data</p>
+                                            <h4 className="font-medium text-foreground">Complete Database</h4>
+                                            <p className="text-sm text-muted-foreground mt-1">Export all tables and data</p>
                                         </div>
                                         <button
                                             onClick={() => exportData('all')}
-                                            className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                                            className="bg-primary text-white px-3 py-2 rounded-md hover:bg-indigo-500 transition-colors text-sm"
                                         >
                                             Export All
                                         </button>
@@ -439,11 +439,11 @@ export default function SystemPage() {
                                 </div>
 
                                 {/* Test Groups */}
-                                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                                <div className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h4 className="font-medium text-gray-900">Test Groups</h4>
-                                            <p className="text-sm text-gray-600 mt-1">Export test group categories</p>
+                                            <h4 className="font-medium text-foreground">Test Groups</h4>
+                                            <p className="text-sm text-muted-foreground mt-1">Export test group categories</p>
                                         </div>
                                         <button
                                             onClick={() => exportData('test-groups')}
@@ -455,11 +455,11 @@ export default function SystemPage() {
                                 </div>
 
                                 {/* Lab Tests */}
-                                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                                <div className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h4 className="font-medium text-gray-900">Lab Tests</h4>
-                                            <p className="text-sm text-gray-600 mt-1">Export laboratory test parameters</p>
+                                            <h4 className="font-medium text-foreground">Lab Tests</h4>
+                                            <p className="text-sm text-muted-foreground mt-1">Export laboratory test parameters</p>
                                         </div>
                                         <button
                                             onClick={() => exportData('lab-tests')}
@@ -471,11 +471,11 @@ export default function SystemPage() {
                                 </div>
 
                                 {/* Report Groups */}
-                                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                                <div className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h4 className="font-medium text-gray-900">Report Groups</h4>
-                                            <p className="text-sm text-gray-600 mt-1">Export report categories</p>
+                                            <h4 className="font-medium text-foreground">Report Groups</h4>
+                                            <p className="text-sm text-muted-foreground mt-1">Export report categories</p>
                                         </div>
                                         <button
                                             onClick={() => exportData('report-groups')}
@@ -487,11 +487,11 @@ export default function SystemPage() {
                                 </div>
 
                                 {/* Patients */}
-                                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                                <div className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h4 className="font-medium text-gray-900">Patients</h4>
-                                            <p className="text-sm text-gray-600 mt-1">Export patient records</p>
+                                            <h4 className="font-medium text-foreground">Patients</h4>
+                                            <p className="text-sm text-muted-foreground mt-1">Export patient records</p>
                                         </div>
                                         <button
                                             onClick={() => exportData('patients')}
@@ -503,11 +503,11 @@ export default function SystemPage() {
                                 </div>
 
                                 {/* Observations */}
-                                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                                <div className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h4 className="font-medium text-gray-900">Observations</h4>
-                                            <p className="text-sm text-gray-600 mt-1">Export patient observations and test results</p>
+                                            <h4 className="font-medium text-foreground">Observations</h4>
+                                            <p className="text-sm text-muted-foreground mt-1">Export patient observations and test results</p>
                                         </div>
                                         <button
                                             onClick={() => exportData('observations')}
@@ -519,9 +519,9 @@ export default function SystemPage() {
                                 </div>
                             </div>
 
-                            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                                <h4 className="text-sm font-medium text-gray-900 mb-2">Export Information</h4>
-                                <ul className="text-sm text-gray-600 space-y-1">
+                            <div className="mt-6 p-4 bg-secondary/30 rounded-lg">
+                                <h4 className="text-sm font-medium text-foreground mb-2">Export Information</h4>
+                                <ul className="text-sm text-muted-foreground space-y-1">
                                     <li>• All exports include metadata with date, time (IST), and doctor information</li>
                                     <li>• Files are exported in JSON format for easy data portability</li>
                                     <li>• Individual table exports contain only the selected data type</li>
@@ -535,3 +535,4 @@ export default function SystemPage() {
         </div>
     );
 }
+

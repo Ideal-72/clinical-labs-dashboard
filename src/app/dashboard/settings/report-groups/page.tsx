@@ -467,8 +467,8 @@ export default function ReportGroupsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Report Groups</h1>
-          <p className="text-gray-600">Manage report categories and their associated test groups</p>
+          <h1 className="text-2xl font-bold text-foreground">Report Groups</h1>
+          <p className="text-muted-foreground">Manage report categories and their associated test groups</p>
         </div>
         
         <div className="flex space-x-3">
@@ -481,7 +481,7 @@ export default function ReportGroupsPage() {
                 e.stopPropagation();
                 setExportDropdownOpen(!exportDropdownOpen);
               }}
-              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2 cursor-pointer"
+              className="bg-secondary text-foreground px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -496,7 +496,7 @@ export default function ReportGroupsPage() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl border border-gray-200 z-10"
+                  className="absolute right-0 mt-2 w-48 bg-card rounded-md shadow-xl border border-border z-10"
                 >
                   <div className="py-1">
                     <button
@@ -505,7 +505,7 @@ export default function ReportGroupsPage() {
                         e.preventDefault();
                         handleExport('csv');
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+                      className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
                     >
                       Export as CSV
                     </button>
@@ -515,7 +515,7 @@ export default function ReportGroupsPage() {
                         e.preventDefault();
                         handleExport('excel');
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+                      className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
                     >
                       Export as Excel
                     </button>
@@ -525,7 +525,7 @@ export default function ReportGroupsPage() {
                         e.preventDefault();
                         handleExport('pdf');
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+                      className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
                     >
                       Export as PDF
                     </button>
@@ -542,7 +542,7 @@ export default function ReportGroupsPage() {
               e.preventDefault();
               setShowModal(true);
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 cursor-pointer"
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-500 transition-colors flex items-center space-x-2 cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -553,11 +553,11 @@ export default function ReportGroupsPage() {
       </div>
 
       {/* Search and Filter Box */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 bg-card p-4 rounded-lg border border-border shadow-sm">
         <div className="flex flex-col sm:flex-row gap-4 flex-1">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -569,7 +569,7 @@ export default function ReportGroupsPage() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="block w-full pl-10 pr-3 py-2 border border-input rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
           
@@ -580,7 +580,7 @@ export default function ReportGroupsPage() {
                 setFilterGroup(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
+              className="w-full border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
             >
               <option value="">All Test Groups</option>
               {uniqueTestGroups.map((group) => (
@@ -599,14 +599,14 @@ export default function ReportGroupsPage() {
                 setFilterGroup('');
                 setCurrentPage(1);
               }}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
             >
               Clear Filters
             </button>
           )}
         </div>
         
-        <div className="text-sm text-gray-500 whitespace-nowrap">
+        <div className="text-sm text-muted-foreground whitespace-nowrap">
           {searchTerm || filterGroup ? `Found ${sortedAndFilteredGroups.length} results` : `${reportGroups.length} total entries`}
         </div>
       </div>
@@ -614,46 +614,46 @@ export default function ReportGroupsPage() {
       {/* Page Size Selector */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-700">Show</span>
+          <span className="text-sm text-foreground">Show</span>
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-900 cursor-pointer focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="border border-input rounded-md px-3 py-1 text-sm text-foreground cursor-pointer focus:outline-none focus:ring-primary focus:border-primary"
           >
             <option value={10}>10</option>
             <option value={50}>50</option>
             <option value={100}>100</option>
             <option value={0}>All</option>
           </select>
-          <span className="text-sm text-gray-700">entries</span>
+          <span className="text-sm text-foreground">entries</span>
         </div>
         
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-foreground">
           {getPaginationText()}
         </div>
       </div>
 
       {/* Table with Animation */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-card shadow-sm rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-secondary/30">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-20">
                   Sl.No
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Test Groups
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-20">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-border">
               <AnimatePresence mode="wait" custom={pageDirection}>
                 {paginatedData.map((group, index) => {
                   // Calculate sequential S.No based on current page
@@ -670,17 +670,17 @@ export default function ReportGroupsPage() {
                       animate="in"
                       exit="out"
                       transition={pageTransition}
-                      className="hover:bg-gray-50"
+                      className="hover:bg-secondary/30"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                         {sequentialNumber}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs">
+                      <td className="px-6 py-4 text-sm font-medium text-foreground max-w-xs">
                         <div title={group.name} className="truncate">
                           {truncateText(group.name, 30)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-md">
+                      <td className="px-6 py-4 text-sm text-foreground max-w-md">
                         <div title={group.testGroups.join(', ')} className="flex flex-wrap gap-1">
                           {group.testGroups.slice(0, 3).map((testGroup, idx) => (
                             <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -688,7 +688,7 @@ export default function ReportGroupsPage() {
                             </span>
                           ))}
                           {group.testGroups.length > 3 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-gray-800">
                               +{group.testGroups.length - 3} more
                             </span>
                           )}
@@ -703,7 +703,7 @@ export default function ReportGroupsPage() {
                               e.stopPropagation();
                               handleDropdownToggle(group.id, e.currentTarget, index);
                             }}
-                            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 cursor-pointer transition-colors"
+                            className="text-muted-foreground hover:text-muted-foreground p-1 rounded-full hover:bg-secondary cursor-pointer transition-colors"
                           >
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -718,7 +718,7 @@ export default function ReportGroupsPage() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ duration: 0.15 }}
-                                className="absolute w-32 bg-white rounded-md shadow-xl border border-gray-200 z-50"
+                                className="absolute w-32 bg-card rounded-md shadow-xl border border-border z-50"
                                 style={dropdownPosition}
                               >
                                 <div className="py-1">
@@ -728,7 +728,7 @@ export default function ReportGroupsPage() {
                                       e.preventDefault();
                                       handleEdit(group);
                                     }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+                                    className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
                                   >
                                     Edit
                                   </button>
@@ -738,7 +738,7 @@ export default function ReportGroupsPage() {
                                       e.preventDefault();
                                       handleDelete(group.id);
                                     }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-secondary cursor-pointer transition-colors"
                                   >
                                     Delete
                                   </button>
@@ -767,7 +767,7 @@ export default function ReportGroupsPage() {
               type="button"
               onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="px-3 py-2 border border-input rounded-md text-sm font-medium text-foreground hover:bg-secondary/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               Previous
             </motion.button>
@@ -782,8 +782,8 @@ export default function ReportGroupsPage() {
                   onClick={() => handlePageChange(page)}
                   className={`px-3 py-2 border text-sm font-medium rounded-md cursor-pointer transition-colors ${
                     currentPage === page
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                      ? 'bg-primary text-white border-blue-600'
+                      : 'border-input text-foreground hover:bg-secondary/30'
                   }`}
                 >
                   {page}
@@ -797,13 +797,13 @@ export default function ReportGroupsPage() {
               type="button"
               onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="px-3 py-2 border border-input rounded-md text-sm font-medium text-foreground hover:bg-secondary/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               Next
             </motion.button>
           </div>
           
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-foreground">
             Page {currentPage} of {totalPages}
           </div>
         </div>
@@ -823,10 +823,10 @@ export default function ReportGroupsPage() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="bg-white bg-opacity-95 backdrop-blur-xl rounded-xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 border-opacity-20"
+              className="bg-card bg-opacity-95 backdrop-blur-xl rounded-xl max-w-lg w-full p-6 shadow-2xl border border-border border-opacity-20"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-foreground">
                   {editingGroup ? 'Edit Report Group' : 'Add New Report Group'}
                 </h3>
                 <motion.button
@@ -838,7 +838,7 @@ export default function ReportGroupsPage() {
                     setEditingGroup(null);
                     setFormData({ name: '', testGroups: '' });
                   }}
-                  className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+                  className="text-muted-foreground hover:text-muted-foreground cursor-pointer transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -848,7 +848,7 @@ export default function ReportGroupsPage() {
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Report Group Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -858,13 +858,13 @@ export default function ReportGroupsPage() {
                     maxLength={50}
                     required
                     placeholder="e.g., LAB, COMMON TEST"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full border border-input rounded-lg px-3 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
-                  <p className="text-xs text-gray-500 mt-1">{formData.name.length}/50 characters</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formData.name.length}/50 characters</p>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Test Groups <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -873,9 +873,9 @@ export default function ReportGroupsPage() {
                     required
                     rows={3}
                     placeholder="e.g., HEMATOLOGY, BIOCHEMISTRY, SEROLOGY (comma separated)"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full border border-input rounded-lg px-3 py-2 text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Separate multiple test groups with commas</p>
+                  <p className="text-xs text-muted-foreground mt-1">Separate multiple test groups with commas</p>
                 </div>
                 
                 <div className="flex justify-end space-x-3 pt-6">
@@ -888,7 +888,7 @@ export default function ReportGroupsPage() {
                       setEditingGroup(null);
                       setFormData({ name: '', testGroups: '' });
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="px-4 py-2 border border-input rounded-lg text-foreground hover:bg-secondary/30 transition-colors cursor-pointer"
                   >
                     Cancel
                   </motion.button>
@@ -897,7 +897,7 @@ export default function ReportGroupsPage() {
                     whileTap={{ scale: 0.95 }}
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center space-x-2 cursor-pointer"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center space-x-2 cursor-pointer"
                   >
                     {loading && (
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -916,3 +916,4 @@ export default function ReportGroupsPage() {
     </div>
   );
 }
+
