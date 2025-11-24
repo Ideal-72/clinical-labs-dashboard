@@ -35,7 +35,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If user is not authenticated and tries to access protected paths, redirect to login
-  if (!isAuthenticated && isProtectedPath && !pathname.startsWith('/api/auth')) {
+  if (!isAuthenticated && isProtectedPath && !pathname.startsWith('/api/auth') && !pathname.startsWith('/api/debug-auth')) {
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
@@ -45,6 +45,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$).*)',
+    '/((?!api/auth|api/debug-auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$).*)',
   ],
 };
