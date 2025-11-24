@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/lab-reports/[id] - Get a specific report with all sections and tests
 export async function GET(
     request: NextRequest,
