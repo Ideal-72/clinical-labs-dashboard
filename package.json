@@ -23,6 +23,7 @@
     "recharts": "^3.5.0"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.14.7",
     "@tailwindcss/postcss": "^4",
     "@types/jspdf": "^1.3.3",
     "@types/node": "^20",
