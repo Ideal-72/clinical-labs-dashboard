@@ -8,6 +8,10 @@ const font = Figtree({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Priya Clinical Labs Dashboard',
   description: 'Personal dashboard for tracking lab results and patient data in real time.',
+  icons: {
+    icon: '/pcl-logo.png',
+    apple: '/pcl-logo.png',
+  },
 };
 
 export default function RootLayout({
