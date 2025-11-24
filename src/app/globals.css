@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+:root {
+  /* Dark Theme by Default */
+  --background: #09090b;
+  /* Zinc 950 */
+  --foreground: #fafafa;
+  /* Zinc 50 */
+
+  --card: #18181b;
+  /* Zinc 900 */
+  --card-foreground: #fafafa;
+
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+
+  --primary: #6366f1;
+  /* Indigo 500 */
+  --primary-foreground: #ffffff;
+
+  --secondary: #27272a;
+  /* Zinc 800 */
+  --secondary-foreground: #fafafa;
+
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  /* Zinc 400 */
+
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #6366f1;
+
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Utilities */
+.glass {
+  background: rgba(24, 24, 27, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* ===== PRINT STYLES FOR LAB REPORTS ===== */
+@media print {
+
+  /* Hide UI elements */
+  .no-print,
+  nav,
+  header,
+  button,
+  .action-bar {
+    display: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 10mm 8mm;
+  }
+
+  /* Report container */
+  .report-container {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Typography for print - more compact */
+  body {
+    font-size: 8pt;
+    line-height: 1.2;
+    background: white !important;
+  }
+
+  /* Compact spacing */
+  .report-header {
+    margin-bottom: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .report-section {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .report-section-title {
+    font-size: 9pt !important;
+    margin-bottom: 0.25rem !important;
+    padding-bottom: 0.1rem !important;
+  }
+
+  /* Make charts much smaller for print */
+  .recharts-wrapper {
+    height: 60px !important;
+    max-height: 60px !important;
+  }
+
+  .recharts-surface {
+    height: 60px !important;
+  }
+
+  /* Compact chart containers */
+  [class*="bg-gray-50"] {
+    padding: 0.25rem !important;
+    margin: 0.25rem 0 !important;
+  }
+
+  /* Reduce test result spacing */
+  .space-y-3>*+* {
+    margin-top: 0.5rem !important;
+  }
+
+  /* Compact grid gaps */
+  .grid {
+    gap: 0.25rem !important;
+  }
+
+  /* Smaller text in specific areas */
+  .text-xs {
+    font-size: 7pt !important;
+  }
+
+  .text-sm {
+    font-size: 8pt !important;
+  }
+
+  .text-base {
+    font-size: 9pt !important;
+  }
+
+  /* Prevent page breaks inside important elements */
+  .report-section,
+  .test-section {
+    page-break-inside: avoid;
+  }
+
+  /* Header styling */
+  .report-header {
+    page-break-after: avoid;
+  }
+
+  /* Section titles */
+  .report-section-title {
+    page-break-after: avoid;
+  }
+
+  /* Force black text */
+  * {
+    color: black !important;
+  }
+
+  /* Borders */
+  .border-border {
+    border-color: #666 !important;
+  }
+
+  /* Compact footer */
+  .report-footer {
+    margin-top: 0.5rem !important;
+    padding-top: 0.5rem !important;
+    font-size: 7pt !important;
+  }
+}
+
+/* ===== REPORT SPECIFIC STYLES ===== */
+.report-header {
+  border-bottom: 2px solid #333;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.report-section {
+  margin-top: 1.5rem;
+}
+
+.report-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #999;
+}
