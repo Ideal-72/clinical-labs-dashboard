@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 // GET /api/lab-reports/[id] - Get a specific report with all sections and tests
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
+        const { id } = await params;
 
         // Fetch report
         const { data: report, error: reportError } = await supabase
@@ -66,10 +66,10 @@ export async function GET(
 // PUT /api/lab-reports/[id] - Update a report
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const body = await request.json();
         const { patientDetails, sections } = body;
 
@@ -156,10 +156,10 @@ export async function PUT(
 // DELETE /api/lab-reports/[id] - Delete a report
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
+        const { id } = await params;
 
         const { error } = await supabase.from('lab_reports').delete().eq('id', id);
 
