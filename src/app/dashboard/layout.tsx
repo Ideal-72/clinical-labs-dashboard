@@ -199,7 +199,7 @@ function SidebarContent({
                 {username}
               </p>
               <p className="text-xs font-medium text-muted-foreground">
-                Doctor
+                Priya Clinical Lab
               </p>
             </div>
             <button
