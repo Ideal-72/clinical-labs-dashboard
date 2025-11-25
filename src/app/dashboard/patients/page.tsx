@@ -13,7 +13,7 @@ interface Patient {
   opno: string;
   name: string;
   age: number;
-  gender: 'M' | 'F';
+  gender: 'M' | 'F' | 'O';
   address: string;
   created_at?: string;
 }
@@ -46,7 +46,7 @@ export default function PatientsPage() {
     opno: '',
     name: '',
     age: '',
-    gender: 'M' as 'M' | 'F',
+    gender: 'M' as 'M' | 'F' | 'O',
     address: ''
   });
   const [loading, setLoading] = useState(false);
@@ -326,7 +326,7 @@ export default function PatientsPage() {
         `"${patient.opno}"`,
         `"${patient.name.replace(/"/g, '""')}"`,
         patient.age,
-        `"${patient.gender === 'M' ? 'Male' : 'Female'}"`,
+        `"${patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other'}"`,
         `"${patient.address.replace(/"/g, '""')}"`,
       ].join(','))
     ].join('\r\n');
@@ -377,7 +377,7 @@ export default function PatientsPage() {
         patient.opno,
         patient.name,
         patient.age,
-        patient.gender === 'M' ? 'Male' : 'Female',
+        patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other',
         patient.address
       ]);
     });
@@ -422,7 +422,7 @@ export default function PatientsPage() {
       patient.opno,
       patient.name,
       patient.age,
-      patient.gender === 'M' ? 'Male' : 'Female',
+      patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other',
       patient.address || 'N/A'
     ]);
 
@@ -646,6 +646,7 @@ export default function PatientsPage() {
               <option value="">All Genders</option>
               <option value="M">Male</option>
               <option value="F">Female</option>
+              <option value="O">Other</option>
             </select>
           </div>
 
@@ -875,8 +876,8 @@ export default function PatientsPage() {
                   type="button"
                   onClick={() => handlePageChange(page)}
                   className={`px-3 py-2 border text-sm font-medium rounded-md cursor-pointer transition-colors ${currentPage === page
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                     }`}
                 >
                   {page}
@@ -999,12 +1000,13 @@ export default function PatientsPage() {
                   </label>
                   <select
                     value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'M' | 'F' })}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'M' | 'F' | 'O' })}
                     required
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
                   >
                     <option value="M">Male</option>
                     <option value="F">Female</option>
+                    <option value="O">Other</option>
                   </select>
                 </div>
 
