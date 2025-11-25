@@ -52,10 +52,8 @@ export default function LoginPage() {
 
       <div className="max-w-md w-full space-y-8 glass p-8 rounded-2xl shadow-2xl border border-white/5">
         <div>
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-inner">
-            <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+          <div className="mx-auto h-24 w-24 flex items-center justify-center rounded-2xl bg-white p-2 shadow-lg">
+            <img src="/pcl-logo-report.jpg" alt="Priya Clinical Labs" className="h-full w-full object-contain" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-foreground">
             Welcome Back
