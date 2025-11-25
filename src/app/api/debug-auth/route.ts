@@ -1,4 +1,3 @@
-```javascript
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import bcrypt from 'bcryptjs';
@@ -16,10 +15,10 @@ export async function GET() {
 
     if (url && key) {
         try {
-            const res = await fetch(`${ url } /rest/v1 / doctors ? select = username & username=eq.admin`, {
+            const res = await fetch(`${url}/rest/v1/doctors?select=username&username=eq.admin`, {
                 headers: {
                     apikey: key,
-                    Authorization: `Bearer ${ key } `
+                    Authorization: `Bearer ${key}`
                 }
             });
             rawFetchResult = {
@@ -36,19 +35,13 @@ export async function GET() {
         // 1. Check connection and RLS visibility via Client
         const { data: users, error } = await supabase
             .from('doctors')
-            .select('username, password_hash') // Changed from password to password_hash if that is the column name, checking both
+            .select('username, password_hash')
             .eq('username', 'admin');
 
         // Check if we got users
         let passwordCheck = null;
         if (users && users.length > 0) {
             const user = users[0];
-            // The column might be password or password_hash based on previous SQL.
-            // In the previous debug output it showed "password": "..." so the column name in the SELECT was likely aliased or just 'password'.
-            // Let's check the actual column name from previous steps.
-            // The previous debug output showed: "userDetails":[{"username":"admin","password":"$2b$10$..."}]
-            // So the column name in the DB is likely 'password' OR the previous select was `select('username, password')`.
-
             const hash = user.password || user.password_hash;
             const isMatch = await bcrypt.compare('admin123', hash);
             passwordCheck = {
@@ -94,4 +87,3 @@ export async function GET() {
         });
     }
 }
-```
