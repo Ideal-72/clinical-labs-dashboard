@@ -201,6 +201,10 @@ function SidebarContent({
               <p className="text-xs font-medium text-muted-foreground">
                 Priya Clinical Lab
               </p>
+              <div className="mt-2 flex items-center opacity-60 hover:opacity-100 transition-opacity">
+                <span className="text-[10px] text-muted-foreground mr-1.5">Powered by</span>
+                <img src="/arx-watermark-sidebar.png" alt="ARx" className="h-3 w-auto" />
+              </div>
             </div>
             <button
               onClick={onLogout}
