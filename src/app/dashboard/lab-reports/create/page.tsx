@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
+import { getTestTemplate } from '@/lib/testTemplates';
 
 interface Test {
     id: string;
@@ -148,9 +149,26 @@ export default function CreateLabReportPage() {
                 if (section.id === sectionId) {
                     return {
                         ...section,
-                        tests: section.tests.map((test) =>
-                            test.id === testId ? { ...test, [field]: value } : test
-                        ),
+                        tests: section.tests.map((test) => {
+                            if (test.id === testId) {
+                                const updatedTest = { ...test, [field]: value };
+
+                                // Auto-fill when test name changes
+                                if (field === 'testName' && value.trim()) {
+                                    const template = getTestTemplate(section.name, value);
+                                    if (template) {
+                                        // Only auto-fill if fields are empty
+                                        if (!test.units) updatedTest.units = template.units;
+                                        if (!test.referenceRange) updatedTest.referenceRange = template.referenceRange;
+                                        if (!test.specimen && template.specimen) updatedTest.specimen = template.specimen;
+                                        if (!test.method && template.method) updatedTest.method = template.method;
+                                    }
+                                }
+
+                                return updatedTest;
+                            }
+                            return test;
+                        }),
                     };
                 }
                 return section;
