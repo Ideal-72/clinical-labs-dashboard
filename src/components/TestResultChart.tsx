@@ -99,26 +99,24 @@ export function TestResultChart({ testName, result, units, referenceRange }: Tes
                     {/* Reference range indicators - now more visible */}
                     <ReferenceLine
                         x={refMin}
-                        stroke="#374151"
+                        stroke="#000000"
                         strokeWidth={2}
-                        strokeDasharray="5 5"
                         label={{
                             value: `${refMin}${units}`,
                             position: 'top',
-                            fill: '#374151',
+                            fill: '#000000',
                             fontSize: 11,
                             fontWeight: 'bold'
                         }}
                     />
                     <ReferenceLine
                         x={refMax}
-                        stroke="#374151"
+                        stroke="#000000"
                         strokeWidth={2}
-                        strokeDasharray="5 5"
                         label={{
                             value: `${refMax}${units}`,
                             position: 'top',
-                            fill: '#374151',
+                            fill: '#000000',
                             fontSize: 11,
                             fontWeight: 'bold'
                         }}
