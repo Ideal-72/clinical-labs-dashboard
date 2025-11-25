@@ -96,18 +96,32 @@ export function TestResultChart({ testName, result, units, referenceRange }: Tes
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                     </Bar>
-                    {/* Reference range indicators */}
+                    {/* Reference range indicators - now more visible */}
                     <ReferenceLine
                         x={refMin}
-                        stroke="#9ca3af"
-                        strokeDasharray="3 3"
-                        label={{ value: 'Min', position: 'top', fill: '#6b7280', fontSize: 10 }}
+                        stroke="#374151"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        label={{
+                            value: `${refMin}${units}`,
+                            position: 'top',
+                            fill: '#374151',
+                            fontSize: 11,
+                            fontWeight: 'bold'
+                        }}
                     />
                     <ReferenceLine
                         x={refMax}
-                        stroke="#9ca3af"
-                        strokeDasharray="3 3"
-                        label={{ value: 'Max', position: 'top', fill: '#6b7280', fontSize: 10 }}
+                        stroke="#374151"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        label={{
+                            value: `${refMax}${units}`,
+                            position: 'top',
+                            fill: '#374151',
+                            fontSize: 11,
+                            fontWeight: 'bold'
+                        }}
                     />
                 </BarChart>
             </ResponsiveContainer>
