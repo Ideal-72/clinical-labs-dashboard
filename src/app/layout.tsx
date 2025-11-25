@@ -9,7 +9,10 @@ export const metadata: Metadata = {
   title: 'Priya Clinical Labs Dashboard',
   description: 'Personal dashboard for tracking lab results and patient data in real time.',
   icons: {
-    icon: '/pcl-logo.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/pcl-logo.png', type: 'image/png' },
+    ],
     apple: '/pcl-logo.png',
   },
 };
