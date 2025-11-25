@@ -222,10 +222,10 @@ export default function ViewLabReportPage() {
                                             <div className="col-span-2 text-sm">{test.units}</div>
                                             <div className="col-span-4">
                                                 {test.reference_range && (
-                                                    <div className="text-sm text-gray-600">{test.reference_range}</div>
+                                                    <div className="text-sm" style={{ color: '#6B7280' }}>{test.reference_range}</div>
                                                 )}
                                                 {test.method && (
-                                                    <div className="text-xs text-gray-500">{test.method}</div>
+                                                    <div className="text-xs" style={{ color: '#9CA3AF' }}>{test.method}</div>
                                                 )}
                                             </div>
                                         </div>
