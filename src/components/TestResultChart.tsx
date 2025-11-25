@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell, Rectangle } from 'recharts';
 
 interface TestResultChartProps {
     testName: string;
@@ -10,30 +10,39 @@ interface TestResultChartProps {
 }
 
 export function TestResultChart({ testName, result, units, referenceRange }: TestResultChartProps) {
-    // Parse reference range (e.g., "104.0 - 202.0" or "Less than 75.0")
+    // Parse reference range (e.g., "104.0 - 202.0" or "Less than 75.0" or "70-110")
     const parseReferenceRange = (range: string): { min: number, max: number } | null => {
         if (!range) return null;
 
         // Handle "Less than X" or "< X"
-        const lessThanMatch = range.match(/(?:less than|<)\s*([\d.]+)/i);
+        const lessThanMatch = range.match(/(?:less\s+than|<)\s*([\d.]+)/i);
         if (lessThanMatch) {
             const maxVal = parseFloat(lessThanMatch[1]);
             return { min: 0, max: maxVal };
         }
 
         // Handle "Greater than X" or "> X"
-        const greaterThanMatch = range.match(/(?:greater than|>)\s*([\d.]+)/i);
+        const greaterThanMatch = range.match(/(?:greater\s+than|>)\s*([\d.]+)/i);
         if (greaterThanMatch) {
             const minVal = parseFloat(greaterThanMatch[1]);
             return { min: minVal, max: minVal * 1.5 };
         }
 
-        // Handle "X - Y" or "X to Y"
-        const rangeMatch = range.match(/([\d.]+)\s*[-–to]\s*([\d.]+)/i);
+        // Handle "X - Y" or "X-Y" or "X to Y" (improved regex)
+        const rangeMatch = range.match(/([\d.]+)\s*[-–—to]+\s*([\d.]+)/i);
         if (rangeMatch) {
             return {
                 min: parseFloat(rangeMatch[1]),
                 max: parseFloat(rangeMatch[2]),
+            };
+        }
+
+        // Handle "M: X-Y, F: A-B" format (gender-specific)
+        const genderMatch = range.match(/([\d.]+)\s*-\s*([\d.]+)/);
+        if (genderMatch) {
+            return {
+                min: parseFloat(genderMatch[1]),
+                max: parseFloat(genderMatch[2]),
             };
         }
 
@@ -49,22 +58,25 @@ export function TestResultChart({ testName, result, units, referenceRange }: Tes
     }
 
     const { min: refMin, max: refMax } = refRange;
-    const refMid = (refMin + refMax) / 2;
 
     // Determine if result is normal, high, or low
     const status = resultValue < refMin ? 'Low' : resultValue > refMax ? 'High' : 'Normal';
     const color = status === 'Normal' ? '#10b981' : status === 'High' ? '#ef4444' : '#f59e0b';
 
-    // Create data for the chart
+    // Create data for the chart - using start and end positions
     const chartData = [
         {
             name: 'Reference Range',
-            value: refMax - refMin,
-            fill: '#e5e7eb',
+            start: refMin,
+            end: refMax,
+            value: refMax,
+            fill: '#9ca3af',
             label: `${refMin} - ${refMax}`,
         },
         {
             name: 'Your Result',
+            start: 0,
+            end: resultValue,
             value: resultValue,
             fill: color,
             label: resultValue.toFixed(1),
@@ -74,6 +86,32 @@ export function TestResultChart({ testName, result, units, referenceRange }: Tes
     // Calculate domain for better visualization
     const domainMin = Math.min(refMin, resultValue) * 0.8;
     const domainMax = Math.max(refMax, resultValue) * 1.2;
+
+    // Custom bar shape that respects start position
+    const CustomBar = (props: any) => {
+        const { fill, x, y, width, height, payload } = props;
+
+        if (payload.name === 'Reference Range') {
+            // For reference range, calculate width based on start and end
+            const xScale = width / (domainMax - domainMin);
+            const startX = x + (payload.start - domainMin) * xScale;
+            const barWidth = (payload.end - payload.start) * xScale;
+
+            return (
+                <Rectangle
+                    x={startX}
+                    y={y}
+                    width={barWidth}
+                    height={height}
+                    fill={fill}
+                    radius={[0, 4, 4, 0]}
+                />
+            );
+        }
+
+        // For result, draw normally
+        return <Rectangle x={x} y={y} width={width} height={height} fill={fill} radius={[0, 4, 4, 0]} />;
+    };
 
     return (
         <div className="my-4 p-4 bg-gray-50 rounded-lg print:bg-white">
@@ -91,12 +129,12 @@ export function TestResultChart({ testName, result, units, referenceRange }: Tes
                         contentStyle={{ backgroundColor: 'white', border: '1px solid #d1d5db' }}
                         labelStyle={{ fontWeight: 'bold' }}
                     />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="value" shape={<CustomBar />}>
                         {chartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                     </Bar>
-                    {/* Reference range indicators - now more visible */}
+                    {/* Reference range markers */}
                     <ReferenceLine
                         x={refMin}
                         stroke="#000000"
