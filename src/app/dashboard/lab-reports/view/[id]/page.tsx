@@ -251,11 +251,19 @@ export default function ViewLabReportPage() {
                     ))}
 
                 {/* Report Footer */}
-                <div className="report-footer mt-8 pt-4 border-t border-gray-300 text-center text-sm">
-                    <p className="font-semibold">End of report</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                        Processing Location: 43-B1, COWLEY BROWN ROAD, R.S PURAM, COIMBATORE - 641002 TAMILNADU
-                    </p>
+                <div className="report-footer mt-8 pt-4 border-t border-gray-300">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1 text-center text-sm">
+                            <p className="font-semibold">End of report</p>
+                            <p className="text-xs text-gray-500 mt-2">
+                                Processing Location: 43-B1, COWLEY BROWN ROAD, R.S PURAM, COIMBATORE - 641002 TAMILNADU
+                            </p>
+                        </div>
+                        <div className="flex flex-col items-center ml-4">
+                            <img src="/arx-watermark.png" alt="Powered by ARx" className="h-8 w-8 opacity-50" />
+                            <p className="text-xs text-gray-400 mt-1">Powered by ARx</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
