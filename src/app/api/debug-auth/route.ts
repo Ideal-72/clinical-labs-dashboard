@@ -35,14 +35,14 @@ export async function GET() {
         // 1. Check connection and RLS visibility via Client
         const { data: users, error } = await supabase
             .from('doctors')
-            .select('username, password_hash')
+            .select('username, password')
             .eq('username', 'admin');
 
         // Check if we got users
         let passwordCheck = null;
         if (users && users.length > 0) {
             const user = users[0];
-            const hash = user.password || user.password_hash;
+            const hash = user.password;
             const isMatch = await bcrypt.compare('admin123', hash);
             passwordCheck = {
                 hashFound: !!hash,
