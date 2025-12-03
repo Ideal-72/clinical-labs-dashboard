@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
@@ -31,6 +31,8 @@ interface PatientDetails {
     age: string;
     sex: string;
     referredBy: string;
+    referralType: string;
+    doctorName: string;
     collectedDate: string;
     receivedDate: string;
     reportedDate: string;
@@ -49,6 +51,8 @@ export default function CreateLabReportPage() {
         age: '',
         sex: 'Male',
         referredBy: 'Self',
+        referralType: 'self',
+        doctorName: '',
         collectedDate: new Date().toISOString().split('T')[0],
         receivedDate: new Date().toISOString().split('T')[0],
         reportedDate: new Date().toISOString().split('T')[0],
@@ -72,6 +76,55 @@ export default function CreateLabReportPage() {
             ],
         },
     ]);
+
+    // Patient autocomplete state
+    const [existingPatients, setExistingPatients] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([]);
+
+    // Fetch existing patients on mount
+    useEffect(() => {
+        const fetchPatients = async () => {
+            if (!doctorId) return;
+            try {
+                const response = await fetch('/api/patients', {
+                    headers: { authorization: doctorId.toString() }
+                });
+                const data = await response.json();
+                setExistingPatients(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error('Error fetching patients:', error);
+                setExistingPatients([]);
+            }
+        };
+        fetchPatients();
+    }, [doctorId]);
+
+
+    // Handle patient selection from autocomplete
+
+    const handlePatientSelect = (patient: any) => {
+
+        setPatientDetails({
+
+            ...patientDetails,
+
+            sidNo: patient.opno,
+
+            patientName: patient.name,
+
+            patientId: patient.opno,
+
+            age: patient.age.toString(),
+
+            sex: patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other',
+
+        });
+
+        setShowSuggestions(false);
+
+    };
+
 
     const addSection = () => {
         const newSection: Section = {
@@ -305,7 +358,7 @@ export default function CreateLabReportPage() {
                                 />
                             </div>
 
-                            <div className="md:col-span-2">
+                            <div className="md:col-span-2 relative">
                                 <label className="block text-sm font-medium text-foreground mb-1">
                                     Patient Name *
                                 </label>
@@ -313,12 +366,39 @@ export default function CreateLabReportPage() {
                                     type="text"
                                     required
                                     value={patientDetails.patientName}
-                                    onChange={(e) =>
-                                        setPatientDetails({ ...patientDetails, patientName: e.target.value })
-                                    }
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setPatientDetails({ ...patientDetails, patientName: value });
+                                        if (value.trim()) {
+                                            const filtered = existingPatients.filter(p =>
+                                                p.name.toLowerCase().includes(value.toLowerCase())
+                                            );
+                                            setFilteredSuggestions(filtered);
+                                            setShowSuggestions(filtered.length > 0);
+                                        } else {
+                                            setShowSuggestions(false);
+                                        }
+                                    }}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                     className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
                                     placeholder="Enter patient name"
                                 />
+                                {showSuggestions && (
+                                    <div className="absolute z-10 w-full bg-background border border-border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                                        {filteredSuggestions.map(patient => (
+                                            <div
+                                                key={patient.id}
+                                                onClick={() => handlePatientSelect(patient)}
+                                                className="px-3 py-2 hover:bg-secondary cursor-pointer border-b border-border last:border-b-0"
+                                            >
+                                                <div className="font-medium text-foreground">{patient.name}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    ID: {patient.opno} | Age: {patient.age} | {patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other'}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div>
@@ -327,10 +407,15 @@ export default function CreateLabReportPage() {
                                 </label>
                                 <input
                                     type="number"
+                                    min="0"
+                                    max="120"
                                     value={patientDetails.age}
-                                    onChange={(e) =>
-                                        setPatientDetails({ ...patientDetails, age: e.target.value })
-                                    }
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value);
+                                        if (value <= 120 || e.target.value === '') {
+                                            setPatientDetails({ ...patientDetails, age: e.target.value });
+                                        }
+                                    }}
                                     className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
                                     placeholder="19"
                                 />
@@ -357,16 +442,44 @@ export default function CreateLabReportPage() {
                                 <label className="block text-sm font-medium text-foreground mb-1">
                                     Referred By
                                 </label>
-                                <input
-                                    type="text"
-                                    value={patientDetails.referredBy}
-                                    onChange={(e) =>
-                                        setPatientDetails({ ...patientDetails, referredBy: e.target.value })
-                                    }
+                                <select
+                                    value={patientDetails.referralType}
+                                    onChange={(e) => {
+                                        const type = e.target.value;
+                                        setPatientDetails({
+                                            ...patientDetails,
+                                            referralType: type,
+                                            referredBy: type === 'self' ? 'Self' : `Dr. ${patientDetails.doctorName}`,
+                                            doctorName: type === 'self' ? '' : patientDetails.doctorName
+                                        });
+                                    }}
                                     className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="Self"
-                                />
+                                >
+                                    <option value="self">Self</option>
+                                    <option value="doctor">Doctor</option>
+                                </select>
                             </div>
+                            {patientDetails.referralType === 'doctor' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1">
+                                        Doctor Name
+                                    </label>
+                                    <div className="flex items-center">
+                                        <span className="text-muted-foreground mr-2 text-sm">Dr.</span>
+                                        <input
+                                            type="text"
+                                            value={patientDetails.doctorName}
+                                            onChange={(e) => setPatientDetails({
+                                                ...patientDetails,
+                                                doctorName: e.target.value,
+                                                referredBy: `Dr. ${e.target.value}`
+                                            })}
+                                            className="flex-1 px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="Enter doctor's name"
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">
