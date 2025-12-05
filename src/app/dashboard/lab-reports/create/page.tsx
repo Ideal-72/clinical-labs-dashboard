@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
-import { getTestTemplate } from '@/lib/testTemplates';
+import { getTestTemplate, getReportGroups, getTestsForGroup } from '@/lib/testTemplates';
 
 interface Test {
     id: string;
@@ -20,11 +20,12 @@ interface Test {
 interface Section {
     id: string;
     name: string;
+    reportGroup: string;
     tests: Test[];
 }
 
 interface PatientDetails {
-    sidNo: string;
+
     branch: string;
     patientId: string;
     patientName: string;
@@ -44,8 +45,8 @@ export default function CreateLabReportPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [patientDetails, setPatientDetails] = useState<PatientDetails>({
-        sidNo: '',
-        branch: '',
+
+        branch: 'Tiruchendur',
         patientId: '',
         patientName: '',
         age: '',
@@ -62,6 +63,7 @@ export default function CreateLabReportPage() {
         {
             id: '1',
             name: '',
+            reportGroup: '',
             tests: [
                 {
                     id: '1',
@@ -109,7 +111,7 @@ export default function CreateLabReportPage() {
 
             ...patientDetails,
 
-            sidNo: patient.opno,
+
 
             patientName: patient.name,
 
@@ -130,6 +132,7 @@ export default function CreateLabReportPage() {
         const newSection: Section = {
             id: Date.now().toString(),
             name: '',
+            reportGroup: '',
             tests: [
                 {
                     id: Date.now().toString(),
@@ -153,6 +156,29 @@ export default function CreateLabReportPage() {
     const updateSectionName = (sectionId: string, name: string) => {
         setSections(
             sections.map((s) => (s.id === sectionId ? { ...s, name } : s))
+        );
+    };
+
+    const updateSectionGroup = (sectionId: string, groupName: string) => {
+        const groupTests = getTestsForGroup(groupName);
+        const newTests: Test[] = groupTests.map((t, index) => ({
+            id: Date.now().toString() + index,
+            testName: t.name,
+            specimen: t.template.specimen || '',
+            result: '',
+            units: t.template.units,
+            referenceRange: t.template.referenceRange,
+            method: t.template.method || '',
+            notes: '',
+        }));
+
+        setSections(
+            sections.map((s) => (s.id === sectionId ? {
+                ...s,
+                reportGroup: groupName,
+                name: groupName,
+                tests: newTests
+            } : s))
         );
     };
 
@@ -311,54 +337,9 @@ export default function CreateLabReportPage() {
                         </h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1">
-                                    SID Number *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={patientDetails.sidNo}
-                                    onChange={(e) =>
-                                        setPatientDetails({ ...patientDetails, sidNo: e.target.value })
-                                    }
-                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="B2011759"
-                                />
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1">
-                                    Branch
-                                </label>
-                                <input
-                                    type="text"
-                                    value={patientDetails.branch}
-                                    onChange={(e) =>
-                                        setPatientDetails({ ...patientDetails, branch: e.target.value })
-                                    }
-                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="THIRUNELVELI"
-                                />
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1">
-                                    Patient ID *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={patientDetails.patientId}
-                                    onChange={(e) =>
-                                        setPatientDetails({ ...patientDetails, patientId: e.target.value })
-                                    }
-                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="8200070095"
-                                />
-                            </div>
-
-                            <div className="md:col-span-2 relative">
+                            <div className="md:col-span-2 lg:col-span-3 relative">
                                 <label className="block text-sm font-medium text-foreground mb-1">
                                     Patient Name *
                                 </label>
@@ -399,6 +380,37 @@ export default function CreateLabReportPage() {
                                         ))}
                                     </div>
                                 )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1">
+                                    Branch
+                                </label>
+                                <input
+                                    type="text"
+                                    value={patientDetails.branch}
+                                    onChange={(e) =>
+                                        setPatientDetails({ ...patientDetails, branch: e.target.value })
+                                    }
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    placeholder="Tiruchendur"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1">
+                                    Patient ID *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={patientDetails.patientId}
+                                    onChange={(e) =>
+                                        setPatientDetails({ ...patientDetails, patientId: e.target.value })
+                                    }
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    placeholder="8200070095"
+                                />
                             </div>
 
                             <div>
@@ -537,19 +549,40 @@ export default function CreateLabReportPage() {
                                     className="bg-secondary rounded-lg p-6 border border-border"
                                 >
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="flex-1 mr-4">
-                                            <label className="block text-sm font-medium text-foreground mb-1">
-                                                Section Name *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={section.name}
-                                                onChange={(e) =>
-                                                    updateSectionName(section.id, e.target.value)
-                                                }
-                                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                placeholder="e.g., Biochemistry, Hematology, Immunology"
-                                            />
+                                        <div className="flex-1 mr-4 grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-foreground mb-1">
+                                                    Report Group
+                                                </label>
+                                                <select
+                                                    value={section.reportGroup || ''}
+                                                    onChange={(e) =>
+                                                        updateSectionGroup(section.id, e.target.value)
+                                                    }
+                                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                                                >
+                                                    <option value="">Select Group</option>
+                                                    {getReportGroups().map((group) => (
+                                                        <option key={group} value={group}>
+                                                            {group}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-foreground mb-1">
+                                                    Section Name *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={section.name}
+                                                    onChange={(e) =>
+                                                        updateSectionName(section.id, e.target.value)
+                                                    }
+                                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                                                    placeholder="e.g., Biochemistry"
+                                                />
+                                            </div>
                                         </div>
                                         {sections.length > 1 && (
                                             <button
@@ -562,158 +595,179 @@ export default function CreateLabReportPage() {
                                         )}
                                     </div>
 
-                                    {/* Tests Table */}
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="border-b border-border">
-                                                    <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
-                                                        Test Name *
-                                                    </th>
-                                                    <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
-                                                        Specimen
-                                                    </th>
-                                                    <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
-                                                        Result *
-                                                    </th>
-                                                    <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
-                                                        Units
-                                                    </th>
-                                                    <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
-                                                        Reference Range
-                                                    </th>
-                                                    <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
-                                                        Method
-                                                    </th>
-                                                    <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground w-10">
+                                    {/* Tests Grid or Table */}
+                                    {section.reportGroup ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+                                            {section.tests.map((test) => (
+                                                <div key={test.id} className="flex flex-col">
+                                                    <label className="text-sm font-medium text-foreground mb-1 truncate" title={test.testName}>
+                                                        {test.testName}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={test.result}
+                                                        onChange={(e) => updateTest(section.id, test.id, 'result', e.target.value)}
+                                                        className="w-full border-b border-border bg-transparent px-0 py-1 focus:border-primary focus:outline-none text-foreground"
+                                                        placeholder={test.units ? `(${test.units})` : ''}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full">
+                                                    <thead>
+                                                        <tr className="border-b border-border">
+                                                            <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
+                                                                Test Name *
+                                                            </th>
+                                                            <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
+                                                                Specimen
+                                                            </th>
+                                                            <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
+                                                                Result *
+                                                            </th>
+                                                            <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
+                                                                Units
+                                                            </th>
+                                                            <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
+                                                                Reference Range
+                                                            </th>
+                                                            <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground">
+                                                                Method
+                                                            </th>
+                                                            <th className="text-left py-2 px-2 text-sm font-medium text-muted-foreground w-10">
 
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {section.tests.map((test) => (
-                                                    <tr key={test.id} className="border-b border-border/50">
-                                                        <td className="py-2 px-2">
-                                                            <input
-                                                                type="text"
-                                                                value={test.testName}
-                                                                onChange={(e) =>
-                                                                    updateTest(
-                                                                        section.id,
-                                                                        test.id,
-                                                                        'testName',
-                                                                        e.target.value
-                                                                    )
-                                                                }
-                                                                className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
-                                                                placeholder="e.g., APOLIPOPROTEIN A1"
-                                                            />
-                                                        </td>
-                                                        <td className="py-2 px-2">
-                                                            <input
-                                                                type="text"
-                                                                value={test.specimen}
-                                                                onChange={(e) =>
-                                                                    updateTest(
-                                                                        section.id,
-                                                                        test.id,
-                                                                        'specimen',
-                                                                        e.target.value
-                                                                    )
-                                                                }
-                                                                className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
-                                                                placeholder="Serum"
-                                                            />
-                                                        </td>
-                                                        <td className="py-2 px-2">
-                                                            <input
-                                                                type="text"
-                                                                value={test.result}
-                                                                onChange={(e) =>
-                                                                    updateTest(
-                                                                        section.id,
-                                                                        test.id,
-                                                                        'result',
-                                                                        e.target.value
-                                                                    )
-                                                                }
-                                                                className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
-                                                                placeholder="120.0"
-                                                            />
-                                                        </td>
-                                                        <td className="py-2 px-2">
-                                                            <input
-                                                                type="text"
-                                                                value={test.units}
-                                                                onChange={(e) =>
-                                                                    updateTest(
-                                                                        section.id,
-                                                                        test.id,
-                                                                        'units',
-                                                                        e.target.value
-                                                                    )
-                                                                }
-                                                                className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
-                                                                placeholder="mg/dL"
-                                                            />
-                                                        </td>
-                                                        <td className="py-2 px-2">
-                                                            <input
-                                                                type="text"
-                                                                value={test.referenceRange}
-                                                                onChange={(e) =>
-                                                                    updateTest(
-                                                                        section.id,
-                                                                        test.id,
-                                                                        'referenceRange',
-                                                                        e.target.value
-                                                                    )
-                                                                }
-                                                                className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
-                                                                placeholder="104.0 - 202.0"
-                                                            />
-                                                        </td>
-                                                        <td className="py-2 px-2">
-                                                            <input
-                                                                type="text"
-                                                                value={test.method}
-                                                                onChange={(e) =>
-                                                                    updateTest(
-                                                                        section.id,
-                                                                        test.id,
-                                                                        'method',
-                                                                        e.target.value
-                                                                    )
-                                                                }
-                                                                className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
-                                                                placeholder="Immunoturbidimetric"
-                                                            />
-                                                        </td>
-                                                        <td className="py-2 px-2">
-                                                            {section.tests.length > 1 && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => removeTest(section.id, test.id)}
-                                                                    className="text-red-400 hover:text-red-300"
-                                                                    title="Remove test"
-                                                                >
-                                                                    ×
-                                                                </button>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {section.tests.map((test) => (
+                                                            <tr key={test.id} className="border-b border-border/50">
+                                                                <td className="py-2 px-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={test.testName}
+                                                                        onChange={(e) =>
+                                                                            updateTest(
+                                                                                section.id,
+                                                                                test.id,
+                                                                                'testName',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
+                                                                        placeholder="e.g., APOLIPOPROTEIN A1"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-2 px-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={test.specimen}
+                                                                        onChange={(e) =>
+                                                                            updateTest(
+                                                                                section.id,
+                                                                                test.id,
+                                                                                'specimen',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
+                                                                        placeholder="Serum"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-2 px-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={test.result}
+                                                                        onChange={(e) =>
+                                                                            updateTest(
+                                                                                section.id,
+                                                                                test.id,
+                                                                                'result',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
+                                                                        placeholder="120.0"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-2 px-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={test.units}
+                                                                        onChange={(e) =>
+                                                                            updateTest(
+                                                                                section.id,
+                                                                                test.id,
+                                                                                'units',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
+                                                                        placeholder="mg/dL"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-2 px-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={test.referenceRange}
+                                                                        onChange={(e) =>
+                                                                            updateTest(
+                                                                                section.id,
+                                                                                test.id,
+                                                                                'referenceRange',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
+                                                                        placeholder="104.0 - 202.0"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-2 px-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={test.method}
+                                                                        onChange={(e) =>
+                                                                            updateTest(
+                                                                                section.id,
+                                                                                test.id,
+                                                                                'method',
+                                                                                e.target.value
+                                                                            )
+                                                                        }
+                                                                        className="w-full px-2 py-1 bg-background border border-border rounded text-sm text-foreground focus:ring-1 focus:ring-primary"
+                                                                        placeholder="Immunoturbidimetric"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-2 px-2">
+                                                                    {section.tests.length > 1 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => removeTest(section.id, test.id)}
+                                                                            className="text-red-400 hover:text-red-300"
+                                                                            title="Remove test"
+                                                                        >
+                                                                            ×
+                                                                        </button>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => addTest(section.id)}
-                                        className="mt-4 px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-md transition-colors text-sm"
-                                    >
-                                        + Add Test
-                                    </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => addTest(section.id)}
+                                                className="mt-4 px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-md transition-colors text-sm"
+                                            >
+                                                + Add Test
+                                            </button>
+                                        </>
+                                    )}
                                 </motion.div>
                             ))}
                         </AnimatePresence>

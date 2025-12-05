@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         const { data: reportData, error: reportError } = await supabase
             .from('lab_reports')
             .insert({
-                sid_no: patientDetails.sidNo,
+                sid_no: patientDetails.sidNo || patientDetails.patientId,
                 branch: patientDetails.branch,
                 patient_id: patientDetails.patientId,
                 patient_name: patientDetails.patientName,
