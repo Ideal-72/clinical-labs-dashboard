@@ -190,7 +190,7 @@ export default function ViewLabReportPage() {
             </div>
 
             {/* Report Container - A4 size: 210mm x 297mm */}
-            <div className="report-container relative mx-auto bg-white text-black p-8 my-6 shadow-lg print:shadow-none print:m-0" style={{ width: '210mm', minHeight: '297mm' }}>
+            <div className="report-container mx-auto bg-white text-black p-8 my-6 shadow-lg print:shadow-none print:m-0" style={{ width: '210mm' }}>
                 {/* Title Header */}
                 <div className="title-header mb-6 pb-6 border-b-2 border-gray-800 flex justify-center relative">
                     {/* PCL Spear Logo - Top Left */}
@@ -337,7 +337,7 @@ export default function ViewLabReportPage() {
                     ))}
 
                 {/* Report Footer */}
-                <div className="report-footer absolute bottom-8 left-8 right-8 pt-4 border-t border-gray-300">
+                <div className="report-footer mt-8 pt-4 border-t border-gray-300">
                     <div className="text-center text-sm">
                         <p className="font-semibold">End of report</p>
                         <p className="text-xs text-gray-500 mt-2">

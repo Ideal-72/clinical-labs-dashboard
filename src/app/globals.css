@@ -222,8 +222,40 @@ body {
     margin-top: 0.5rem !important;
     padding-top: 0.5rem !important;
     font-size: 7pt !important;
+    position: relative !important;
+    bottom: auto !important;
+  }
+
+  /* Hide browser print headers/footers (URL, date, page numbers) */
+  @page {
+    margin: 0.5cm;
+    size: A4;
+  }
+
+  /* Remove all browser-generated content */
+  body::before,
+  body::after {
+    display: none !important;
+  }
+
+  /* Hide any anchor links that might appear */
+  a[href]:after {
+    content: none !important;
+  }
+
+  /* Ensure single page layout */
+  .report-container {
+    min-height: auto !important;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Prevent page breaks in sections */
+  table {
+    page-break-inside: avoid;
   }
 }
+
 
 /* ===== REPORT SPECIFIC STYLES ===== */
 .report-header {
