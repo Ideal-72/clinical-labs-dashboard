@@ -190,7 +190,7 @@ export default function ViewLabReportPage() {
             </div>
 
             {/* Report Container - A4 size: 210mm x 297mm */}
-            <div className="report-container mx-auto bg-white text-black p-8 my-6 shadow-lg print:shadow-none print:m-0" style={{ width: '210mm' }}>
+            <div className="report-container mx-auto bg-white text-black p-8 my-6 shadow-lg print:shadow-none print:m-0 print:my-0" style={{ width: '210mm', minHeight: '297mm' }}>
                 {/* Title Header */}
                 <div className="title-header mb-6 pb-6 border-b-2 border-gray-800 flex justify-center relative">
                     {/* PCL Spear Logo - Top Left */}
