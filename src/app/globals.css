@@ -226,6 +226,13 @@ body {
     bottom: auto !important;
   }
 
+  /* CRITICAL: Override all height constraints */
+  .report-container,
+  div[style*="width: 210mm"] {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
   /* Hide browser print headers/footers (URL, date, page numbers) */
   @page {
     margin: 0.5cm;
@@ -243,23 +250,80 @@ body {
     content: none !important;
   }
 
-  /* Ensure single page layout */
-  .report-container {
-    min-height: auto !important;
-    page-break-after: avoid;
-    page-break-inside: avoid;
+  /* Ensure single page layout - FORCE all height constraints off */
+  .report-container,
+  div[style*="width: 210mm"] {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    display: block !important;
+    padding: 1cm !important;
+    /* Reduced from 1.5cm */
+    width: 100% !important;
+    /* CRITICAL: Prevent horizontal overflow */
+    max-width: 100% !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
-  /* Prevent page breaks in sections */
+  /* Remove all margins and padding that cause overflow */
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Allow tables to fit naturally */
   table {
-    page-break-inside: avoid;
+    page-break-inside: auto;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Footer fixed to bottom for print */
+  .report-footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    width: 100% !important;
+    border-top: 1px solid #ccc !important;
+    /* Visual separation */
+  }
+
+  /* Adjust body padding to prevent footer overlap if content is long */
+  .report-container {
+    padding-bottom: 3cm !important;
+    /* Space for footer */
+  }
+
+  /* Specific fix for top line removal */
+  .title-header {
+    border-top: none !important;
+  }
+
+  /* Reduce spacing in signatures */
+  .report-footer .text-sm {
+    padding-bottom: 0.5rem !important;
   }
 }
 
 
+
+
+
 /* ===== REPORT SPECIFIC STYLES ===== */
 .report-header {
-  border-bottom: 2px solid #333;
+  border-bottom: 1px solid #d1d5db;
+  /* Matches border-gray-300 */
   padding-bottom: 1rem;
   margin-bottom: 1rem;
 }

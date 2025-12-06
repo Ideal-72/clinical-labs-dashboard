@@ -157,7 +157,7 @@ export default function ViewLabReportPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background print:min-h-0 print:h-auto print:bg-white print:overflow-visible">
             {/* Action Bar - Hidden in print */}
             <div className="no-print sticky top-0 z-50 bg-secondary border-b border-border p-4 flex items-center justify-between">
                 <button
@@ -190,9 +190,11 @@ export default function ViewLabReportPage() {
             </div>
 
             {/* Report Container - A4 size: 210mm x 297mm */}
-            <div className="report-container mx-auto bg-white text-black p-8 my-6 shadow-lg print:shadow-none print:m-0 print:my-0" style={{ width: '210mm', minHeight: '297mm' }}>
+            {/* Report Container - A4 size: 210mm x 297mm */}
+            <div className="report-container flex flex-col mx-auto bg-white text-black p-8 my-6 shadow-lg print:shadow-none print:m-0 print:my-0 print:p-4 print:block min-h-[297mm] print:min-h-0 print:overflow-hidden" style={{ width: '210mm' }}>
                 {/* Title Header */}
-                <div className="title-header mb-6 pb-6 border-b-2 border-gray-800 flex justify-center relative">
+                {/* Title Header */}
+                <div className="title-header mb-6 pb-6 border-b border-gray-300 flex justify-center relative print:mb-3 print:pb-3">
                     {/* PCL Spear Logo - Top Left */}
                     <div className="absolute top-0 left-0">
                         <img src="/pcl-spear-logo.png" alt="PCL Logo" className="h-36 w-auto" />
@@ -208,7 +210,7 @@ export default function ViewLabReportPage() {
                 </div>
 
                 {/* Report Header */}
-                <div className="report-header mb-6">
+                <div className="report-header mb-6 print:mb-3">
                     <div className="flex items-start justify-between">
                         {/* Patient Details - Left Side */}
                         <div className="text-sm">
@@ -241,7 +243,7 @@ export default function ViewLabReportPage() {
                 </div>
 
                 {/* Final Test Report Title */}
-                <div className="text-center my-4">
+                <div className="text-center my-4 print:my-2">
                     <h1 className="text-xl font-bold">Final Test Report</h1>
                     <p className="text-xs text-gray-500">Page 1 of 1</p>
                 </div>
@@ -250,7 +252,7 @@ export default function ViewLabReportPage() {
                 {report.sections
                     .filter((section) => section.tests && section.tests.length > 0)
                     .map((section) => (
-                        <div key={section.id} className="mb-8">
+                        <div key={section.id} className="mb-8 print:mb-2">
                             <table className="w-full border-collapse border border-gray-300 text-sm">
                                 <thead>
                                     <tr className="bg-gray-50">
@@ -337,8 +339,8 @@ export default function ViewLabReportPage() {
                     ))}
 
                 {/* Report Footer */}
-                <div className="report-footer mt-8 pt-4 border-t border-gray-300">
-                    <div className="text-center text-sm">
+                <div className="report-footer mt-auto pt-4 border-t border-gray-300 bg-white print:mt-8">
+                    <div className="text-center text-sm pb-4">
                         <p className="font-semibold">End of report</p>
                         <p className="text-xs text-gray-500 mt-2">
                             Processing Location: 137/54 Ground Floor, Mela Ratha Veethi, Tiruchendur, Tamil Nadu 628215, India
