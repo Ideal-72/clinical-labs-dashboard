@@ -202,11 +202,11 @@ export default function ViewLabReportPage() {
 
                     {/* Microscope Icon - Top Right */}
                     <div className="absolute top-0 right-0">
-                        <img src="/microscope-icon.png" alt="Microscope" className="h-36 w-auto opacity-80" />
+                        <img src="/microscope-icon.png" alt="Microscope" className="h-36 w-auto mix-blend-multiply filter contrast-125" />
                     </div>
 
                     {/* Main Title */}
-                    <img src="/priya-lab-header.png" alt="Priya Clinical Lab" className="h-32 w-auto" />
+                    <img src="/priya-lab-header-transparent.png" alt="Priya Clinical Lab" className="h-32 w-auto" />
                 </div>
 
                 {/* Report Header */}
