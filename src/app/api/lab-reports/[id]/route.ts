@@ -76,22 +76,56 @@ export async function PUT(
         const { patientDetails, sections } = body;
 
         // Update report
-        const { error: reportError } = await supabase
-            .from('lab_reports')
-            .update({
-                sid_no: patientDetails.sidNo,
-                branch: patientDetails.branch,
-                patient_id: patientDetails.patientId,
-                patient_name: patientDetails.patientName,
-                age: patientDetails.age,
-                sex: patientDetails.sex,
-                referred_by: patientDetails.referredBy,
-                collected_date: patientDetails.collectedDate,
-                received_date: patientDetails.receivedDate,
-                reported_date: patientDetails.reportedDate,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', id);
+        let reportError;
+        try {
+            const result = await supabase
+                .from('lab_reports')
+                .update({
+                    sid_no: patientDetails.sidNo,
+                    branch: patientDetails.branch,
+                    patient_id: patientDetails.patientId,
+                    patient_name: patientDetails.patientName,
+                    age: patientDetails.age,
+                    sex: patientDetails.sex,
+                    referred_by: patientDetails.referredBy,
+                    collected_date: patientDetails.collectedDate,
+                    received_date: patientDetails.receivedDate,
+                    reported_date: patientDetails.reportedDate,
+                    comments: patientDetails.comments,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', id);
+
+            reportError = result.error;
+
+            if (reportError && (
+                reportError.message.includes('comments') ||
+                reportError.message.includes('schema cache')
+            )) {
+                throw reportError;
+            }
+        } catch (err) {
+            console.warn('Failed to update with comments, retrying without it...', err);
+            const fallbackResult = await supabase
+                .from('lab_reports')
+                .update({
+                    sid_no: patientDetails.sidNo,
+                    branch: patientDetails.branch,
+                    patient_id: patientDetails.patientId,
+                    patient_name: patientDetails.patientName,
+                    age: patientDetails.age,
+                    sex: patientDetails.sex,
+                    referred_by: patientDetails.referredBy,
+                    collected_date: patientDetails.collectedDate,
+                    received_date: patientDetails.receivedDate,
+                    reported_date: patientDetails.reportedDate,
+                    // comments omitted
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', id);
+
+            reportError = fallbackResult.error;
+        }
 
         if (reportError) throw reportError;
 
@@ -131,6 +165,7 @@ export async function PUT(
                         method: test.method,
                         notes: test.notes,
                         display_order: testIndex,
+                        row_type: test.rowType || 'test',
                     }));
 
                     const { error: testsError } = await supabase

@@ -133,6 +133,22 @@ export default function ObservationsPage() {
     const [editingObservation, setEditingObservation] = useState<Observation | null>(null);
     const [viewingObservation, setViewingObservation] = useState<Observation | null>(null);
 
+    // Searchable Combobox State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const filteredPatients = useMemo(() => {
+        if (!searchQuery) return patients;
+        const lowerQuery = searchQuery.toLowerCase();
+        // If query matches the currently selected patient exactly, show all (or just that one)
+        // But usually we want to filter while typing.
+        // We'll filter based on name or OPNO
+        return patients.filter(p =>
+            p.name.toLowerCase().includes(lowerQuery) ||
+            p.opno.toLowerCase().includes(lowerQuery)
+        );
+    }, [patients, searchQuery]);
+
     // Add report form data
     const [addFormData, setAddFormData] = useState({
         date: new Date().toISOString().split('T')[0],
@@ -594,34 +610,78 @@ export default function ObservationsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Observations</h1>
-                    <p className="text-muted-foreground">Manage patient observations and test reports</p>
+            {/* New Design Implementation */}
+            <div className="bg-card shadow-md rounded-md overflow-hidden border border-border">
+                {/* Blue Header - Using primary color to match "Add Patient" button */}
+                <div className="bg-primary px-4 py-3 flex justify-between items-center">
+                    <h1 className="text-white font-medium text-lg uppercase flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        LAB OBSERVATION
+                    </h1>
+                    <div className="text-white">
+                        {/* Notification/Icons from screenshot if needed, for now placeholder or empty */}
+                    </div>
                 </div>
-            </div>
 
-            {/* Patient Selection */}
-            <div className="bg-card p-4 rounded-lg border border-border shadow-sm">
-                <div className="flex items-center space-x-4">
-                    <div className="flex-1">
-                        <label className="block text-sm font-medium text-muted-foreground mb-2">
-                            Select Patient
-                        </label>
-                        <select
-                            value={selectedPatient?.id || ''}
-                            onChange={handlePatientSelect}
-                            onKeyPress={handlePatientKeyPress}
-                            className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
-                        >
-                            <option value="">Choose a patient...</option>
-                            {patients.map((patient) => (
-                                <option key={patient.id} value={patient.id}>
-                                    {patient.name} (OP: {patient.opno})
-                                </option>
-                            ))}
-                        </select>
+                {/* Content Area */}
+                <div className="p-6 bg-card min-h-[200px]">
+                    <div className="bg-card border border-border rounded p-4 mb-4">
+                        <label className="block text-sm text-muted-foreground mb-1">Patient Name</label>
+                        <div className="flex gap-2">
+                            <div className="relative flex-1 dropdown-container">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setIsDropdownOpen(true);
+                                        setSelectedPatient(null); // Clear selection on edit
+                                    }}
+                                    onClick={() => setIsDropdownOpen(true)}
+                                    placeholder="Select or search patient..."
+                                    className="w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder-muted-foreground"
+                                />
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+
+                                {isDropdownOpen && (
+                                    <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded shadow-lg max-h-60 overflow-y-auto">
+                                        {filteredPatients.length > 0 ? (
+                                            filteredPatients.map((patient) => (
+                                                <div
+                                                    key={patient.id}
+                                                    onClick={() => {
+                                                        setSelectedPatient(patient);
+                                                        setSearchQuery(`${patient.name} (OP: ${patient.opno})`);
+                                                        setIsDropdownOpen(false);
+                                                    }}
+                                                    className="px-4 py-2 hover:bg-secondary cursor-pointer text-sm text-popover-foreground"
+                                                >
+                                                    {patient.name} <span className="text-muted-foreground text-xs ml-1">(OP: {patient.opno})</span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-2 text-sm text-muted-foreground">No patients found</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={fetchObservations}
+                                className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded text-sm font-medium flex items-center gap-1 transition-colors"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                                Enter
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

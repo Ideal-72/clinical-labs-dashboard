@@ -17,4 +17,6 @@ const getSupabaseKey = () => {
     return key;
 };
 
+
+
 export const supabase = createClient(getSupabaseUrl(), getSupabaseKey());

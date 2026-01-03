@@ -16,6 +16,8 @@ interface Patient {
   gender: 'M' | 'F' | 'O';
   address: string;
   created_at?: string;
+  lab_reports?: { sid_no: string }[];
+  sid_no?: string;
 }
 
 // IST DateTime helper function
@@ -44,6 +46,7 @@ export default function PatientsPage() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [formData, setFormData] = useState({
     opno: '',
+    sid_no: '',
     name: '',
     age: '',
     gender: 'M' as 'M' | 'F' | 'O',
@@ -96,9 +99,11 @@ export default function PatientsPage() {
     if (searchTerm) {
       filtered = filtered.filter(patient =>
         patient.opno.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.sid_no?.toLowerCase().includes(searchTerm.toLowerCase()) || // Search by SID No
         patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         patient.age.toString().includes(searchTerm.toLowerCase()) ||
-        patient.address.toLowerCase().includes(searchTerm.toLowerCase())
+        patient.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.lab_reports?.some(report => report.sid_no?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -147,6 +152,13 @@ export default function PatientsPage() {
     if (patients.length === 0) return '000001';
     const maxOpno = Math.max(...patients.map(p => parseInt(p.opno)));
     return (maxOpno + 1).toString().padStart(6, '0');
+  };
+
+  // Generate next SID No
+  const generateNextSid = () => {
+    if (patients.length === 0) return '0001';
+    const maxSid = Math.max(...patients.map(p => parseInt(p.sid_no || '0')));
+    return (maxSid + 1).toString().padStart(4, '0');
   };
 
   // Calculate dropdown position based on row position
@@ -225,7 +237,11 @@ export default function PatientsPage() {
       const method = editingPatient ? 'PUT' : 'POST';
       const body = editingPatient
         ? { id: editingPatient.id, ...formData }
-        : { ...formData, opno: formData.opno || generateNextOpno() };
+        : {
+          ...formData,
+          opno: formData.opno || generateNextOpno(),
+          sid_no: formData.sid_no || generateNextSid()
+        };
 
       const response = await fetch(url, {
         method,
@@ -240,7 +256,7 @@ export default function PatientsPage() {
         await fetchPatients();
         setShowModal(false);
         setEditingPatient(null);
-        setFormData({ opno: '', name: '', age: '', gender: 'M', address: '' });
+        setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '' });
       } else {
         const error = await response.json();
         alert('Error: ' + error.error);
@@ -257,6 +273,7 @@ export default function PatientsPage() {
     setEditingPatient(patient);
     setFormData({
       opno: patient.opno,
+      sid_no: patient.sid_no || '',
       name: patient.name,
       age: patient.age.toString(),
       gender: patient.gender,
@@ -527,11 +544,35 @@ export default function PatientsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Patients</h1>
-          <p className="text-muted-foreground">Manage patient records and information</p>
+          <h1 className="text-2xl font-bold text-primary">Patients</h1>
+          <p className="text-gray-500">Manage your patients</p>
         </div>
 
         <div className="flex space-x-3">
+          <button
+            onClick={async () => {
+              if (confirm('WARNING: This will DELETE ALL DATA. Are you sure?')) {
+                try {
+                  const res = await fetch('/api/reset-data', {
+                    method: 'POST',
+                    headers: { authorization: doctorId!.toString() }
+                  });
+                  if (res.ok) {
+                    alert('Data reset successfully.');
+                    window.location.reload();
+                  } else {
+                    alert('Failed to reset data.');
+                  }
+                } catch (e) {
+                  console.error(e);
+                  alert('Error resetting data.');
+                }
+              }
+            }}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Reset Data
+          </button>
           {/* Export Dropdown */}
           <div className="relative dropdown-container">
             <button
@@ -601,7 +642,11 @@ export default function PatientsPage() {
             onClick={(e) => {
               e.preventDefault();
               setShowModal(true);
-              setFormData({ ...formData, opno: generateNextOpno() });
+              setFormData({
+                ...formData,
+                opno: generateNextOpno(),
+                sid_no: generateNextSid()
+              });
             }}
             className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center space-x-2 cursor-pointer"
           >
@@ -624,7 +669,7 @@ export default function PatientsPage() {
             </div>
             <input
               type="text"
-              placeholder="Search by OP No, name, age, or address..."
+              placeholder="Search by OP No, SID, name, age, or address..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -930,7 +975,7 @@ export default function PatientsPage() {
                   onClick={() => {
                     setShowModal(false);
                     setEditingPatient(null);
-                    setFormData({ opno: '', name: '', age: '', gender: 'M', address: '' });
+                    setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '' });
                   }}
                   className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
                 >
@@ -958,6 +1003,23 @@ export default function PatientsPage() {
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                     <p className="text-xs text-gray-500 mt-1">6-digit patient number</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      SID No
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.sid_no}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setFormData({ ...formData, sid_no: value });
+                      }}
+                      placeholder="0001"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">4-digit SID number</p>
                   </div>
 
                   <div>
@@ -1030,7 +1092,8 @@ export default function PatientsPage() {
                     onClick={() => {
                       setShowModal(false);
                       setEditingPatient(null);
-                      setFormData({ opno: '', name: '', age: '', gender: 'M', address: '' });
+                      setEditingPatient(null);
+                      setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '' });
                     }}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                   >

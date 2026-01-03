@@ -289,6 +289,13 @@ export default function HomePage() {
             icon: '🔍',
             color: 'bg-teal-600 hover:bg-teal-700',
             action: () => document.getElementById('patient-search')?.focus()
+        },
+        {
+            name: 'Bill Generator',
+            description: 'Create bill/envelope',
+            icon: '🧾',
+            color: 'bg-rose-600 hover:bg-rose-700',
+            action: () => router.push('/dashboard/lab-reports/bill')
         }
     ];
 

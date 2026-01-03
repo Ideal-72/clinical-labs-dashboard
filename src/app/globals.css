@@ -100,219 +100,103 @@ body {
 }
 
 /* ===== PRINT STYLES FOR LAB REPORTS ===== */
+/* ===== PRINT STYLES FOR LAB REPORTS ===== */
 @media print {
 
-  /* Hide UI elements */
-  .no-print,
-  nav,
-  header,
-  button,
-  .action-bar {
+  /* 1. Page Setup - Clear everything to hide Browser Header/Footer (URL/Title) */
+  @page {
+    size: A4;
+    margin: 0 !important;
+  }
+
+  /* Utility to hide elements in print (e.g., Action Bar) */
+  .no-print {
     display: none !important;
   }
 
-  /* Page setup */
-  @page {
-    size: A4;
-    margin: 10mm 8mm;
-  }
-
-  /* Report container */
-  .report-container {
-    background: white !important;
-    color: black !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-  }
-
-  /* Typography for print - more compact */
-  body {
-    font-size: 8pt;
-    line-height: 1.2;
-    background: white !important;
-  }
-
-  /* Compact spacing */
-  .report-header {
-    margin-bottom: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-
-  .report-section {
-    margin-top: 0.5rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .report-section-title {
-    font-size: 9pt !important;
-    margin-bottom: 0.25rem !important;
-    padding-bottom: 0.1rem !important;
-  }
-
-  /* Make charts much smaller for print */
-  .recharts-wrapper {
-    height: 60px !important;
-    max-height: 60px !important;
-  }
-
-  .recharts-surface {
-    height: 60px !important;
-  }
-
-  /* Compact chart containers */
-  [class*="bg-gray-50"] {
-    padding: 0.25rem !important;
-    margin: 0.25rem 0 !important;
-  }
-
-  /* Reduce test result spacing */
-  .space-y-3>*+* {
-    margin-top: 0.5rem !important;
-  }
-
-  /* Compact grid gaps */
-  .grid {
-    gap: 0.25rem !important;
-  }
-
-  /* Smaller text in specific areas */
-  .text-xs {
-    font-size: 7pt !important;
-  }
-
-  .text-sm {
-    font-size: 8pt !important;
-  }
-
-  .text-base {
-    font-size: 9pt !important;
-  }
-
-  /* Prevent page breaks inside important elements */
-  .report-section,
-  .test-section {
-    page-break-inside: avoid;
-  }
-
-  /* Header styling */
-  .report-header {
-    page-break-after: avoid;
-  }
-
-  /* Section titles */
-  .report-section-title {
-    page-break-after: avoid;
-  }
-
-  /* Force black text */
-  * {
-    color: black !important;
-  }
-
-  /* Borders */
-  .border-border {
-    border-color: #666 !important;
-  }
-
-  /* Compact footer */
-  .report-footer {
-    margin-top: 0.5rem !important;
-    padding-top: 0.5rem !important;
-    font-size: 7pt !important;
-    position: relative !important;
-    bottom: auto !important;
-  }
-
-  /* CRITICAL: Override all height constraints */
-  .report-container,
-  div[style*="width: 210mm"] {
-    min-height: 0 !important;
-    height: auto !important;
-  }
-
-  /* Hide browser print headers/footers (URL, date, page numbers) */
-  @page {
-    margin: 0.5cm;
-    size: A4;
-  }
-
-  /* Remove all browser-generated content */
-  body::before,
-  body::after {
-    display: none !important;
-  }
-
-  /* Hide any anchor links that might appear */
-  a[href]:after {
-    content: none !important;
-  }
-
-  /* Ensure single page layout - FORCE all height constraints off */
-  .report-container,
-  div[style*="width: 210mm"] {
-    min-height: 0 !important;
-    height: auto !important;
-    max-height: none !important;
-    display: block !important;
-    padding: 1cm !important;
-    /* Reduced from 1.5cm */
-    width: 100% !important;
-    /* CRITICAL: Prevent horizontal overflow */
-    max-width: 100% !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  /* Remove all margins and padding that cause overflow */
+  /* 2. Global Resets */
   html,
   body {
+    width: auto !important;
+    max-width: 100% !important;
     height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: visible !important;
-    background: white !important;
+    position: static !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    background-color: white !important;
+    /* Force white background */
+    color: black !important;
+    /* Force black text */
   }
 
-  * {
-    box-sizing: border-box;
+  body {
+    background-color: white !important;
   }
 
-  /* Allow tables to fit naturally */
-  table {
-    page-break-inside: auto;
-    margin-bottom: 1rem !important;
-  }
-
-  /* Footer fixed to bottom for print */
-  .report-footer {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    background: white !important;
-    padding-bottom: 0 !important;
-    margin-top: 0 !important;
-    width: 100% !important;
-    border-top: 1px solid #ccc !important;
-    /* Visual separation */
-  }
-
-  /* Adjust body padding to prevent footer overlap if content is long */
+  /* 3. Report Container - The Canvas */
   .report-container {
-    padding-bottom: 3cm !important;
-    /* Space for footer */
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 295mm !important;
+    /* Maximize A4 usage (297mm - 2mm safety) */
+    /* Minimum A4 height */
+    margin: 0 !important;
+    padding: 15mm !important;
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    display: block !important;
   }
 
-  /* Specific fix for top line removal */
+  /* Strict Multi-Page Forced Height (for Renal reports) */
+  .report-container.multi-page-report {
+    min-height: 578mm !important;
+    /* Safety Zone: 578mm ensures footer sits well above the Page 3 break line */
+    overflow: hidden !important;
+  }
+
+  /* ... (Middle sections un-touched) ... */
+
+  /* 6. Layout Specifics */
+  .report-footer {
+    width: 100% !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    /* Pin to very bottom of container (last page) */
+    left: 0 !important;
+    padding: 0 15mm 5mm 15mm !important;
+    /* Push closer to bottom: 0 top, 15 side, 5 bottom */
+    background: white;
+    color: black !important;
+    /* Ensure visibility */
+
+    /* Strict Atomic Rule: Never split the footer */
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+    display: block !important;
+  }
+
+  /* Force every single element inside footer to be black */
+  .report-footer * {
+    color: black !important;
+    -webkit-text-fill-color: black !important;
+  }
+
   .title-header {
     border-top: none !important;
   }
 
-  /* Reduce spacing in signatures */
-  .report-footer .text-sm {
-    padding-bottom: 0.5rem !important;
+  /* Content area adjustment */
+  .report-container {
+    padding-bottom: 40mm !important;
+    /* Safety buffer for footer */
   }
 }
 

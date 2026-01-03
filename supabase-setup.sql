@@ -49,3 +49,18 @@ CREATE INDEX IF NOT EXISTS idx_lab_reports_doctor_id ON lab_reports(doctor_id);
 CREATE INDEX IF NOT EXISTS idx_lab_reports_patient_id ON lab_reports(patient_id);
 CREATE INDEX IF NOT EXISTS idx_test_sections_report_id ON test_sections(report_id);
 CREATE INDEX IF NOT EXISTS idx_test_results_section_id ON test_results(section_id);
+
+-- 2025-12-11: Add include_header column for Header/Footer toggle feature
+ALTER TABLE lab_reports ADD COLUMN IF NOT EXISTS include_header BOOLEAN DEFAULT TRUE;
+
+-- 2025-12-14: Add include_notes column for Clinical Notes toggle feature
+ALTER TABLE lab_reports ADD COLUMN IF NOT EXISTS include_notes BOOLEAN DEFAULT TRUE;
+
+-- 2025-12-19: Add "comments" column for Footer Note feature
+ALTER TABLE lab_reports ADD COLUMN IF NOT EXISTS comments TEXT;
+
+-- 2025-12-21: Add row_type column for Manual Notes (interstitial text rows)
+ALTER TABLE test_results ADD COLUMN IF NOT EXISTS row_type TEXT DEFAULT 'test';
+
+-- 2024-01-03: Add sid_no column to patients table
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS sid_no TEXT;

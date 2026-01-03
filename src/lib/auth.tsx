@@ -25,11 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check for existing authentication on mount
     const savedDoctorId = localStorage.getItem('doctorId');
     const savedUsername = localStorage.getItem('username');
-    
+
     if (savedDoctorId && savedUsername) {
       setDoctorId(parseInt(savedDoctorId));
       setUsername(savedUsername);
       setIsAuthenticated(true);
+
+      // Ensure cookies are set for middleware (in case they were cleared or session is fresh)
+      if (!document.cookie.includes('doctor-id')) {
+        document.cookie = `doctor-id=${savedDoctorId}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        document.cookie = `auth-token=authenticated; path=/; max-age=${60 * 60 * 24 * 7}`;
+      }
     }
     setLoading(false);
   }, []);
@@ -38,16 +44,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Save to localStorage
     localStorage.setItem('doctorId', doctorId.toString());
     localStorage.setItem('username', username);
-    
+
     // Set cookies for middleware
     document.cookie = `doctor-id=${doctorId}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
     document.cookie = `auth-token=authenticated; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
-    
+
     // Update state
     setDoctorId(doctorId);
     setUsername(username);
     setIsAuthenticated(true);
-    
+
     // Redirect to dashboard
     router.push('/dashboard/home');
   };
@@ -56,16 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear localStorage
     localStorage.removeItem('doctorId');
     localStorage.removeItem('username');
-    
+
     // Clear cookies
     document.cookie = 'doctor-id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
     document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-    
+
     // Update state
     setDoctorId(null);
     setUsername(null);
     setIsAuthenticated(false);
-    
+
     // Redirect to login
     router.push('/login');
   };

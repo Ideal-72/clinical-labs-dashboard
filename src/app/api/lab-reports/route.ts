@@ -49,24 +49,69 @@ export async function POST(request: NextRequest) {
         }
 
         // Insert lab report
-        const { data: reportData, error: reportError } = await supabase
-            .from('lab_reports')
-            .insert({
-                sid_no: patientDetails.sidNo || patientDetails.patientId,
-                branch: patientDetails.branch,
-                patient_id: patientDetails.patientId,
-                patient_name: patientDetails.patientName,
-                age: patientDetails.age,
-                sex: patientDetails.sex,
-                referred_by: patientDetails.referredBy,
-                collected_date: patientDetails.collectedDate,
-                received_date: patientDetails.receivedDate,
-                reported_date: patientDetails.reportedDate || new Date().toISOString(),
-                doctor_id: doctorId,
-                created_by: doctorId,
-            })
-            .select()
-            .single();
+        // Try to insert with include_header
+        let reportData, reportError;
+
+        try {
+            const result = await supabase
+                .from('lab_reports')
+                .insert({
+                    sid_no: patientDetails.sidNo || patientDetails.patientId,
+                    branch: patientDetails.branch,
+                    patient_id: patientDetails.patientId,
+                    patient_name: patientDetails.patientName,
+                    age: patientDetails.age,
+                    sex: patientDetails.sex,
+                    referred_by: patientDetails.referredBy,
+                    collected_date: patientDetails.collectedDate,
+                    received_date: patientDetails.receivedDate,
+                    reported_date: patientDetails.reportedDate || new Date().toISOString(),
+                    doctor_id: doctorId,
+                    created_by: doctorId,
+                    include_header: patientDetails.includeHeader ?? true,
+                    include_notes: patientDetails.includeNotes ?? true,
+                    comments: patientDetails.comments,
+                })
+                .select()
+                .single();
+
+            reportData = result.data;
+            reportError = result.error;
+
+            if (reportError && (
+                reportError.message.includes('include_header') ||
+                reportError.message.includes('include_notes') ||
+                reportError.message.includes('comments') ||
+                reportError.message.includes('schema cache')
+            )) {
+                throw reportError; // Throw to catch block for retry
+            }
+        } catch (err) {
+            // Fallback: Try insertion WITHOUT optional columns if they don't exist
+            console.warn('Failed to insert with optional columns, retrying without them...', err);
+            const fallbackResult = await supabase
+                .from('lab_reports')
+                .insert({
+                    sid_no: patientDetails.sidNo || patientDetails.patientId,
+                    branch: patientDetails.branch,
+                    patient_id: patientDetails.patientId,
+                    patient_name: patientDetails.patientName,
+                    age: patientDetails.age,
+                    sex: patientDetails.sex,
+                    referred_by: patientDetails.referredBy,
+                    collected_date: patientDetails.collectedDate,
+                    received_date: patientDetails.receivedDate,
+                    reported_date: patientDetails.reportedDate || new Date().toISOString(),
+                    doctor_id: doctorId,
+                    created_by: doctorId,
+                    // optional columns omitted
+                })
+                .select()
+                .single();
+
+            reportData = fallbackResult.data;
+            reportError = fallbackResult.error;
+        }
 
         if (reportError) throw reportError;
 
@@ -99,6 +144,7 @@ export async function POST(request: NextRequest) {
                         method: test.method,
                         notes: test.notes,
                         display_order: testIndex,
+                        row_type: test.rowType || 'test',
                     }));
 
                     const { error: testsError } = await supabase

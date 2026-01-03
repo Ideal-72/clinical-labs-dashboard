@@ -35,7 +35,10 @@ export function middleware(request: NextRequest) {
   }
 
   // If user is not authenticated and tries to access protected paths, redirect to login
-  if (!isAuthenticated && isProtectedPath && !pathname.startsWith('/api/auth') && !pathname.startsWith('/api/debug-auth')) {
+  if (!isAuthenticated && isProtectedPath && !pathname.startsWith('/api/auth') && !pathname.startsWith('/api/debug-auth') && !pathname.startsWith('/api/reset-data') && !pathname.startsWith('/api/check-data')) {
+    if (pathname.startsWith('/api')) {
+      return NextResponse.json({ error: 'Unauthorized', message: 'Please log in to continue' }, { status: 401 });
+    }
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }

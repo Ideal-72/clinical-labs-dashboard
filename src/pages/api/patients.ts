@@ -13,19 +13,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     case 'GET':
       const { data: patients, error: fetchError } = await supabase
         .from('patients')
-        .select('id, opno, name, age, gender, address, created_at')
+        .select('id, opno, sid_no, name, age, gender, address, created_at')
         .eq('doctor_id', doctorId)
         .order('created_at', { ascending: false });
 
       if (fetchError) {
         return res.status(500).json({ error: fetchError.message });
       }
-      
+
       return res.status(200).json(patients || []);
 
     case 'POST':
-      const { opno, name, age, gender, address } = req.body;
-      
+      const { opno, sid_no, name, age, gender, address } = req.body;
+
       // Generate next OPNO if not provided
       let finalOpno = opno;
       if (!opno) {
@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .eq('doctor_id', doctorId)
           .order('opno', { ascending: false })
           .limit(1);
-        
+
         const lastOpno = lastPatient?.[0]?.opno || '000000';
         const nextNum = parseInt(lastOpno) + 1;
         finalOpno = nextNum.toString().padStart(6, '0');
@@ -43,29 +43,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const { data: newPatient, error: insertError } = await supabase
         .from('patients')
-        .insert([{ 
-          doctor_id: doctorId, 
+        .insert([{
+          doctor_id: doctorId,
           opno: finalOpno,
+          sid_no: sid_no || '',
           name: name.substring(0, 100),
           age: parseInt(age),
           gender,
           address: address ? address.substring(0, 100) : ''
         }])
-        .select('id, opno, name, age, gender, address, created_at')
+        .select('id, opno, sid_no, name, age, gender, address, created_at')
         .single();
 
       if (insertError) {
         return res.status(500).json({ error: insertError.message });
       }
-      
+
       return res.status(201).json(newPatient);
 
     case 'PUT':
-      const { id, opno: updateOpno, name: updateName, age: updateAge, gender: updateGender, address: updateAddress } = req.body;
+      const { id, opno: updateOpno, sid_no: updateSid, name: updateName, age: updateAge, gender: updateGender, address: updateAddress } = req.body;
       const { data: updatedPatient, error: updateError } = await supabase
         .from('patients')
-        .update({ 
+        .update({
           opno: updateOpno,
+          sid_no: updateSid,
           name: updateName.substring(0, 100),
           age: parseInt(updateAge),
           gender: updateGender,
@@ -73,13 +75,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
         .eq('id', id)
         .eq('doctor_id', doctorId)
-        .select('id, opno, name, age, gender, address, created_at')
+        .select('id, opno, sid_no, name, age, gender, address, created_at')
         .single();
 
       if (updateError) {
         return res.status(500).json({ error: updateError.message });
       }
-      
+
       return res.status(200).json(updatedPatient);
 
     case 'DELETE':
