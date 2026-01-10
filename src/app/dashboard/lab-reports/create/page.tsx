@@ -384,12 +384,13 @@ export default function CreateLabReportPage() {
         }
 
         // --- ELECTROLYTES (KFT) ---
-        const na = getVal('Sodium');
-        const k = getVal('Potassium');
-        const cl = getVal('Chloride');
-        if (na !== null && k !== null && cl !== null) {
-            setVal('Bicarbonate', ((na + k - cl) / 2).toFixed(1));
-        }
+        // Calculation removed as per user request
+        // const na = getVal('Sodium');
+        // const k = getVal('Potassium');
+        // const cl = getVal('Chloride');
+        // if (na !== null && k !== null && cl !== null) {
+        //    setVal('Bicarbonate', ((na + k - cl) / 2).toFixed(1));
+        // }
 
         return updatedTests;
     };

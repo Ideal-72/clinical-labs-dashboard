@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../../lib/auth';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
@@ -817,7 +818,9 @@ export default function PatientsPage() {
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-foreground max-w-xs">
                         <div title={patient.name} className="truncate">
-                          {truncateText(patient.name, 30)}
+                          <Link href={`/dashboard/reports?patientId=${patient.id}`} className="text-primary hover:underline">
+                            {truncateText(patient.name, 30)}
+                          </Link>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">

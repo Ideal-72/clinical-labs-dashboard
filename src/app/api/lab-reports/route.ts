@@ -8,6 +8,10 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const doctorId = searchParams.get('doctorId');
+        const date = searchParams.get('date');
+        const patientId = searchParams.get('patientId');
+        const search = searchParams.get('search'); // New search parameter
+        const patient_id = searchParams.get('patient_id'); // Handle both cases just in case
 
         if (!doctorId) {
             return NextResponse.json(
@@ -16,11 +20,36 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const { data, error } = await supabase
+        let query = supabase
             .from('lab_reports')
             .select('*')
             .eq('doctor_id', doctorId)
             .order('created_at', { ascending: false });
+
+        // If search is present, prioritize search over specific filters
+        if (search) {
+            // Search across multiple columns using 'or'
+            // Note: 'ilike' is for case-insensitive pattern matching.
+            // We cast patient_id to text if needed, but Supabase might handle it.
+            // Assuming patient_name and sid_no are text.
+            const searchTerm = `%${search}%`;
+            query = query.or(`patient_name.ilike.${searchTerm},sid_no.ilike.${searchTerm},patient_id.ilike.${searchTerm}`);
+        } else {
+            // Apply standard filters if no search (or combine them, but typically search overrides)
+            if (date) {
+                // Check if date string is valid YYYY-MM-DD
+                if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                    query = query.eq('reported_date', date);
+                }
+            }
+
+            const pId = patientId || patient_id;
+            if (pId) {
+                query = query.eq('patient_id', pId);
+            }
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 

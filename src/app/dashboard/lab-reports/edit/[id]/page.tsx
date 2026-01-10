@@ -17,6 +17,7 @@ interface Test {
     method: string;
     notes: string;
     rowType?: 'test' | 'note';
+    isHeader?: boolean;
 }
 
 interface Section {
@@ -81,7 +82,7 @@ export default function EditLabReportPage() {
                     if (test.testName) {
                         const template = getTestTemplate(section.name, test.testName);
                         if (template && template.referenceRange) {
-                            const newRange = getReferenceRangeByGender(template.referenceRange, patientDetails.sex);
+                            const newRange = getReferenceRangeByGender(template.referenceRange, patientDetails.sex, patientDetails.age);
                             // Only update if it's different to avoid unnecessary renders/changes
                             if (newRange !== test.referenceRange) {
                                 return { ...test, referenceRange: newRange };
@@ -121,22 +122,97 @@ export default function EditLabReportPage() {
             });
 
             // Convert sections
-            const formattedSections = report.sections.map((section: any) => ({
-                id: section.id,
-                name: section.section_name,
-                reportGroup: '', // Will be empty for existing reports
-                tests: section.tests.map((test: any) => ({
-                    id: test.id,
-                    testName: test.test_name,
-                    specimen: test.specimen || '',
-                    result: test.result,
-                    units: test.units || '',
-                    referenceRange: test.reference_range || '',
-                    method: test.method || '',
-                    notes: test.notes || '',
-                    rowType: test.row_type || 'test',
-                })),
-            }));
+            const formattedSections = report.sections.map((section: any) => {
+                const groupName = section.section_name; // Assuming this matches template keys
+                // Check if this section name corresponds to a known report group template
+                const templateTestsRaw = getTestsForGroup(groupName);
+                const isKnownGroup = templateTestsRaw.length > 0;
+
+                let finalTests: Test[] = [];
+
+                if (isKnownGroup) {
+                    // Create a map of existing tests for quick lookup by name (case-insensitive)
+                    const existingTestsMap = new Map();
+                    section.tests.forEach((t: any) => {
+                        existingTestsMap.set(t.test_name.toLowerCase().trim(), t);
+                    });
+
+                    // 1. Map template tests, merging with existing data if present
+                    finalTests = templateTestsRaw.map((t, index) => {
+                        const existing = existingTestsMap.get(t.name.toLowerCase().trim());
+
+                        if (existing) {
+                            return {
+                                id: existing.id,
+                                testName: existing.test_name,
+                                specimen: existing.specimen || t.template.specimen || '',
+                                result: existing.result,
+                                units: existing.units || t.template.units || '',
+                                referenceRange: existing.reference_range || getReferenceRangeByGender(t.template.referenceRange, report.sex, report.age),
+                                method: existing.method || t.template.method || '',
+                                notes: existing.notes || '',
+                                rowType: existing.row_type || 'test',
+                                isHeader: t.template.type === 'group_header',
+                            };
+                        } else {
+                            // New empty test from template
+                            return {
+                                id: Date.now().toString() + '-' + index + '-' + Math.random().toString(36).substr(2, 9), // Ensure unique ID
+                                testName: t.name,
+                                specimen: t.template.specimen || '',
+                                result: t.template.defaultValue || '',
+                                units: t.template.units || '',
+                                referenceRange: getReferenceRangeByGender(t.template.referenceRange, report.sex, report.age),
+                                method: t.template.method || '',
+                                notes: '',
+                                rowType: t.template.type === 'group_header' ? 'note' : 'test',
+                                isHeader: t.template.type === 'group_header',
+                            };
+                        }
+                    });
+
+                    // 2. Identify and append any "custom" tests from DB that weren't in the template
+                    // (User might have added a custom row in the past)
+                    const templateTestNames = new Set(templateTestsRaw.map(t => t.name.toLowerCase().trim()));
+                    const extraTests = section.tests.filter((t: any) => !templateTestNames.has(t.test_name.toLowerCase().trim()));
+
+                    const formattedExtraTests = extraTests.map((t: any) => ({
+                        id: t.id,
+                        testName: t.test_name,
+                        specimen: t.specimen || '',
+                        result: t.result,
+                        units: t.units || '',
+                        referenceRange: t.reference_range || '',
+                        method: t.method || '',
+                        notes: t.notes || '',
+                        rowType: t.row_type || 'test',
+                        isHeader: false,
+                    }));
+
+                    finalTests = [...finalTests, ...formattedExtraTests];
+
+                } else {
+                    // Fallback: If not a known group, just load what we have
+                    finalTests = section.tests.map((test: any) => ({
+                        id: test.id,
+                        testName: test.test_name,
+                        specimen: test.specimen || '',
+                        result: test.result,
+                        units: test.units || '',
+                        referenceRange: test.reference_range || '',
+                        method: test.method || '',
+                        notes: test.notes || '',
+                        rowType: test.row_type || 'test',
+                    }));
+                }
+
+                return {
+                    id: section.id,
+                    name: section.section_name,
+                    reportGroup: isKnownGroup ? groupName : '',
+                    tests: finalTests,
+                };
+            });
 
             setSections(formattedSections);
         } catch (error: any) {
@@ -343,12 +419,13 @@ export default function EditLabReportPage() {
         }
 
         // --- ELECTROLYTES (KFT) ---
-        const na = getVal('Sodium.') || getVal('Sodium');
-        const k = getVal('Potassium.') || getVal('Potassium');
-        const cl = getVal('Chloride.') || getVal('Chloride');
-        if (na !== null && k !== null && cl !== null) {
-            setVal('Bicarbonate.', ((na + k - cl) / 2).toFixed(1));
-        }
+        // Calculation removed as per user request
+        // const na = getVal('Sodium.') || getVal('Sodium');
+        // const k = getVal('Potassium.') || getVal('Potassium');
+        // const cl = getVal('Chloride.') || getVal('Chloride');
+        // if (na !== null && k !== null && cl !== null) {
+        //     setVal('Bicarbonate.', ((na + k - cl) / 2).toFixed(1));
+        // }
 
         return updatedTests;
     };

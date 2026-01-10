@@ -2,316 +2,135 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-interface Patient {
-    id: number;
-    name: string;
-    opno: string;
-}
-
 interface Report {
-    id: number;
-    report_date: string;
-    report_name: string;
-    parameters: Record<string, any>;
-    patients: Patient;
+    id: string;
+    sid_no: string;
+    patient_id: string;
+    branch: string;
+    patient_name: string;
+    age: string;
+    sex: string;
+    referred_by: string;
+    collected_date: string;
+    received_date: string;
+    reported_date: string;
+    created_at: string;
+    report_name?: string; // Might not exist in new schema, treated as generic "Lab Report"
 }
 
-// Test categories configuration (same as observations page)
-const TEST_CATEGORIES = {
-    'COMMON TESTS': {
-        'URINE': ['URINE', 'REACTION', 'PH', 'ACETONE', 'ALBUMIN', 'SUGAR', 'BILE SALT', 'BILE PIGMENT', 'MICROALBUMIN'],
-        'DEPOSITS': ['DEPOSITS', 'PUS CELLS', 'RBC', 'EPITHELIAL CELLS', 'CASTS', 'CRYSTALS', 'OTHERS', 'PREGNANCY TEST', 'SPECIFIC GRAVITY', 'CULTURE & SENSITIVITY'],
-        'MOTION': ['MOTION', 'OVA', 'CYST', 'TROPHOZOITE', 'PUS CELLS', 'RBC', 'OTHERS', 'OCCULT BLOOD', 'REDUCTION TEST'],
-        'SPUTUM': ['SPUTUM : AFB']
-    },
-    'LAB': {
-        'HEMATOLOGY': [
-            'HEMOGLOBIN', 'TOTAL RBC', 'TOTAL WBC', 'NEUTROPHIL', 'LYMPHOCYTE', 'MONOCYTE', 'BASOPHIL', 'EOSINOPHIL',
-            'ESR 1/2 HR', 'ESR 1HR', 'PCV', 'MCV', 'MCH', 'MCHC', 'BLEEDING TIME', 'CLOTTING TIME', 'PLATELET COUNT',
-            'RETICULOCYTE COUNT', 'ABSOLUTE EOSINOPHIL COUNT', 'MP, MF - SLIDE METHOD', 'MP - CARD METHOD',
-            'BLOOD GROUPING', 'RH - TYPING', 'CROSS MATCHING', 'MANTOUX TEST'
-        ],
-        'BIOCHEMISTRY': [
-            'SUGAR(FASTING)', 'SUGAR(RANDOM)', 'SUGAR (PP)', 'HbA1C', 'S. UREA', 'S.CREATININE', 'CHOLESTEROL : TOTAL',
-            'CHOLESTEROL :HDL', 'CHOLESTEROL :LDL', 'CHOLESTEROL :VLDL', 'TRIGLYCERIDES', 'URICACID', 'S.CALCIUM',
-            'CK MB', 'CPK', 'TROPONIN-I', 'SODIUM', 'POTASSIUM', 'CHLORIDE', 'BI-CARBONATE', 'S.BILIRUBIN : TOTAL',
-            'S.BILIRUBIN : DIRECT', 'S.BILIRUBIN : INDIRECT', 'TOTAL PROTIEN', 'ALBUMIN', 'GLOBULIN', 'ICTERIC INDEX',
-            'S.ALKALINE PHOSPHATASE', 'S.ACID PHOSPHATASE', 'SGOT', 'SGPT', 'S.AMYLASE'
-        ],
-        'SEROLOGY': [
-            'WIDAL :O', 'WIDAL :H', 'WIDAL :A(H)', 'WIDAL :B(H)', 'DENGUE', 'VDRL', 'HIV- I & II', 'RA FACTOR',
-            'ASO TITRE', 'CRP', 'HBs Ag', 'HCV', 'TB LGM', 'LEPTOSPIRA'
-        ],
-        'SEMEN ANALYSIS': ['SEMEN ANALYSIS', 'VOLUME', 'VISCOSITY', 'COLOUR', 'ODOUR', 'REACTION', 'PH', 'COUNT'],
-        'MOTILITY': ['MOTILITY', 'ACTIVE MOTILE', 'SLUGGISH MOTILE', 'NON MOTILE', 'ABNORMAL', 'PUS CELLS', 'RBC', 'EPITHELIAL CELLS'],
-        'SEROLOGY TEST': ['RF(RHEUMATOID FACTOR)', 'CRP (C-REACTIVE PROTEIN)', 'ASO']
-    },
-    'SEMEN': {
-        'SEMEN ANALYSIS': ['SEMEN ANALYSIS', 'VOLUME', 'VISCOSITY', 'COLOUR', 'ODOUR', 'REACTION', 'PH', 'COUNT'],
-        'MOTILITY': ['MOTILITY', 'ACTIVE MOTILE', 'SLUGGISH MOTILE', 'NON MOTILE', 'ABNORMAL', 'PUS CELLS', 'RBC', 'EPITHELIAL CELLS']
-    },
-    'URINE': {
-        'URINE': ['URINE', 'REACTION', 'PH', 'ACETONE', 'ALBUMIN', 'SUGAR', 'BILE SALT', 'BILE PIGMENT', 'MICROALBUMIN'],
-        'DEPOSITS': ['DEPOSITS', 'PUS CELLS', 'RBC', 'EPITHELIAL CELLS', 'CASTS', 'CRYSTALS', 'OTHERS', 'PREGNANCY TEST', 'SPECIFIC GRAVITY', 'CULTURE & SENSITIVITY']
-    },
-    'HEMATOLOGY': [
-        'HEMOGLOBIN', 'TOTAL RBC', 'TOTAL WBC', 'NEUTROPHIL', 'LYMPHOCYTE', 'MONOCYTE', 'BASOPHIL', 'EOSINOPHIL',
-        'ESR 1/2 HR', 'ESR 1HR', 'PCV', 'MCV', 'MCH', 'MCHC', 'BLEEDING TIME', 'CLOTTING TIME', 'PLATELET COUNT',
-        'RETICULOCYTE COUNT', 'ABSOLUTE EOSINOPHIL COUNT', 'MP, MF - SLIDE METHOD', 'MP - CARD METHOD',
-        'BLOOD GROUPING', 'RH - TYPING', 'CROSS MATCHING', 'MANTOUX TEST'
-    ],
-    'SEROLOGY': [
-        'WIDAL :O', 'WIDAL :H', 'WIDAL :A(H)', 'WIDAL :B(H)', 'DENGUE', 'VDRL', 'HIV- I & II', 'RA FACTOR',
-        'ASO TITRE', 'CRP', 'HBs Ag', 'HCV', 'TB LGM', 'LEPTOSPIRA'
-    ],
-    'BIOCHEMISTRY': [
-        'SUGAR(FASTING)', 'SUGAR(RANDOM)', 'SUGAR (PP)', 'HbA1C', 'S. UREA', 'S.CREATININE', 'CHOLESTEROL : TOTAL',
-        'CHOLESTEROL :HDL', 'CHOLESTEROL :LDL', 'CHOLESTEROL :VLDL', 'TRIGLYCERIDES', 'URICACID', 'S.CALCIUM',
-        'CK MB', 'CPK', 'TROPONIN-I', 'SODIUM', 'POTASSIUM', 'CHLORIDE', 'BI-CARBONATE', 'S.BILIRUBIN : TOTAL',
-        'S.BILIRUBIN : DIRECT', 'S.BILIRUBIN : INDIRECT', 'TOTAL PROTIEN', 'ALBUMIN', 'GLOBULIN', 'ICTERIC INDEX',
-        'S.ALKALINE PHOSPHATASE', 'S.ACID PHOSPHATASE', 'SGOT', 'SGPT', 'S.AMYLASE'
-    ],
-    'SEMEN ANALYSIS': ['SEMEN ANALYSIS', 'VOLUME', 'VISCOSITY', 'COLOUR', 'ODOUR', 'REACTION', 'PH', 'COUNT'],
-    'MOTILITY': ['MOTILITY', 'ACTIVE MOTILE', 'SLUGGISH MOTILE', 'NON MOTILE', 'ABNORMAL', 'PUS CELLS', 'RBC', 'EPITHELIAL CELLS'],
-    'DEPOSITS': ['DEPOSITS', 'PUS CELLS', 'RBC', 'EPITHELIAL CELLS', 'CASTS', 'CRYSTALS', 'OTHERS', 'PREGNANCY TEST', 'SPECIFIC GRAVITY', 'CULTURE & SENSITIVITY'],
-    'MOTION': ['MOTION', 'OVA', 'CYST', 'TROPHOZOITE', 'PUS CELLS', 'RBC', 'OTHERS', 'OCCULT BLOOD', 'REDUCTION TEST'],
-    'HORMONE': ['T3', 'T4', 'TSH 3RD GENERATION (HS TSH)'],
-    'HORMONE_UNDER_16': ['T3', 'T4', 'TSH 3RD GENERATION (HS TSH)'],
-    'SPUTUM': ['SPUTUM : AFB'],
-    'URINE CULTURE': {
-        'ISO ORGANISM': ['ISO ORGANISM'],
-        'SENSITIVE': [
-            'NITROFURANTOIN', 'CHLOROMPHENICOL', 'CEFTRIAXONE', 'TETRACYCLINE', 'GENTAMYCIN', 'AMOXYCILLIN',
-            'NORFLOXACIN', 'AMIKACIN', 'ERYTHROMYCIN', 'CLOXACILLIN', 'KANAMYCIN', 'CEFALEXIN', 'OFLOXACIN',
-            'AZITHROMYCIN', 'CIPROFLOXACIN'
-        ],
-        'RESISTANCE': [
-            'NITROFURANTOIN', 'CHLOROMPHENICOL', 'CEFTRIAXONE', 'TETRACYCLINE', 'GENTAMYCIN', 'AMOXYCILLIN',
-            'NORFLOXACIN', 'AMIKACIN', 'ERYTHROMYCIN', 'CLOXACILLIN', 'KANAMYCIN', 'CEFALEXIN', 'OFLOXACIN',
-            'AZITHROMYCIN', 'CIPROFLOXACIN'
-        ]
-    },
-    'SEROLOGY TEST': ['RF(RHEUMATOID FACTOR)', 'CRP (C-REACTIVE PROTEIN)', 'ASO']
-};
-
-// IST DateTime helper function
+// Function to get current IST date and time
 const getISTDateTime = () => {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000;
     const istTime = new Date(now.getTime() + istOffset);
 
-    const day = istTime.getUTCDate().toString().padStart(2, '0');
-    const month = (istTime.getUTCMonth() + 1).toString().padStart(2, '0');
-    const year = istTime.getUTCFullYear();
-    const hours = istTime.getUTCHours();
-    const minutes = istTime.getUTCMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = (hours % 12 || 12).toString().padStart(2, '0');
-
     return {
-        filename: `${day}-${month}-${year}-${displayHours}-${minutes}-${ampm}`,
-        readable: `${day}/${month}/${year} ${displayHours}:${minutes} ${ampm} IST`
+        date: istTime.toISOString().split('T')[0],
+        time: istTime.toISOString().split('T')[1].split('.')[0],
+        readable: istTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        filename: istTime.toISOString().replace(/[:.]/g, '-').split('T')[0]
     };
 };
 
 export default function ReportsPage() {
-    const [reports, setReports] = useState<Report[]>([]);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [showModal, setShowModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [editingReport, setEditingReport] = useState<Report | null>(null);
-    const [viewingReport, setViewingReport] = useState<Report | null>(null);
+    const { doctorId } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const patientIdParam = searchParams.get('patientId');
 
-    // Edit form data
-    const [editFormData, setEditFormData] = useState({
-        date: '',
-        reportGroup: '',
-        parameters: {} as Record<string, any>
+    // Default to today's date if no patient ID is provided
+    const [selectedDate, setSelectedDate] = useState(() => {
+        if (patientIdParam) return '';
+        return getISTDateTime().date;
     });
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
-    const [dropdownPosition, setDropdownPosition] = useState<any>({});
-
-    // Export dropdown
     const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
-
-    // Pagination state
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-    const [pageDirection, setPageDirection] = useState(0);
-
-    const { doctorId } = useAuth();
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+
+    // Debounce search input
     useEffect(() => {
-        if (selectedDate) {
-            fetchReports();
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        if (debouncedSearch) {
+            setSelectedDate('');
         }
-    }, [selectedDate, doctorId]);
+        fetchReports();
+    }, [debouncedSearch, selectedDate, doctorId, patientIdParam]);
 
     const fetchReports = async () => {
-        if (!doctorId || !selectedDate) return;
+        if (!doctorId) return;
 
+        if (!selectedDate && !patientIdParam && !debouncedSearch) return;
+
+        setLoading(true);
         try {
-            const response = await fetch(`/api/reports?date=${selectedDate}`, {
-                headers: { authorization: doctorId.toString() }
-            });
+            let url = `/api/lab-reports?doctorId=${doctorId}`;
+
+            // Priority: Search > PatientID > Date
+            if (debouncedSearch) {
+                url += `&search=${encodeURIComponent(debouncedSearch)}`;
+            } else if (patientIdParam) {
+                url += `&patientId=${patientIdParam}`;
+            } else if (selectedDate) {
+                url += `&date=${selectedDate}`;
+            }
+
+            const response = await fetch(url);
             const data = await response.json();
-            setReports(Array.isArray(data) ? data : []);
+
+            if (data.reports) {
+                setReports(data.reports);
+            } else {
+                setReports([]);
+            }
         } catch (error) {
             console.error('Error fetching reports:', error);
+            setReports([]);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Pagination logic
-    const totalPages = useMemo(() => {
-        return pageSize === 0 ? 1 : Math.ceil(reports.length / pageSize);
-    }, [reports.length, pageSize]);
-
-    const paginatedData = useMemo(() => {
-        if (pageSize === 0) return reports;
-        const startIndex = (currentPage - 1) * pageSize;
-        return reports.slice(startIndex, startIndex + pageSize);
-    }, [reports, currentPage, pageSize]);
-
+    // Close dropdown when clicking outside
     useEffect(() => {
-        setCurrentPage(1);
-    }, [pageSize]);
-
-    // Fixed positioning dropdown (Option 5 solution)
-    const handleDropdownToggle = (reportId: number, buttonElement: HTMLElement, rowIndex: number) => {
-        if (dropdownOpen === reportId) {
-            setDropdownOpen(null);
-        } else {
-            // Get button position relative to viewport
-            const rect = buttonElement.getBoundingClientRect();
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-
-            // Calculate position to ensure dropdown stays within viewport
-            let top = rect.bottom + 5;
-            let left = rect.left - 100; // Position to the left of the button
-
-            // Adjust if dropdown would go off-screen
-            if (left < 10) {
-                left = rect.right - 130; // Position to the right if no space on left
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setExportDropdownOpen(false);
             }
+        };
 
-            if (top + 160 > viewportHeight) {
-                top = rect.top - 160; // Position above if no space below
-            }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-            const position = {
-                position: 'fixed' as const,
-                top: `${top}px`,
-                left: `${left}px`,
-                zIndex: 9999
-            };
-
-            setDropdownPosition(position);
-            setDropdownOpen(reportId);
-        }
-    };
-
-
-    const handleView = (report: Report) => {
-        setViewingReport(report);
-        setShowModal(true);
-        setDropdownOpen(null);
-    };
-
-    const handleEdit = (report: Report) => {
-        setEditingReport(report);
-        setEditFormData({
-            date: report.report_date,
-            reportGroup: report.report_name,
-            parameters: report.parameters
-        });
-        setShowEditModal(true);
-        setDropdownOpen(null);
-    };
-
-    const handleDelete = async (id: number) => {
-        if (confirm('Are you sure you want to delete this report?')) {
-            try {
-                const response = await fetch('/api/reports', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        authorization: doctorId!.toString()
-                    },
-                    body: JSON.stringify({ id })
-                });
-
-                if (response.ok) {
-                    await fetchReports();
-                } else {
-                    const error = await response.json();
-                    alert('Error: ' + error.error);
-                }
-            } catch (error) {
-                console.error('Error deleting report:', error);
-                alert('Error deleting report');
-            }
-        }
-        setDropdownOpen(null);
-    };
-
-    const handlePrint = (report: Report) => {
-        generatePrintableReport(report);
-        setDropdownOpen(null);
-    };
-
-    const generatePrintableReport = (report: Report) => {
-        const dateTime = getISTDateTime();
-        const doc = new jsPDF();
-
-        // Header
-        doc.setFontSize(20);
-        doc.setTextColor(40, 40, 40);
-        doc.text('LABORATORY REPORT', 105, 25, { align: 'center' });
-
-        doc.setFontSize(12);
-        doc.text(`Patient: ${report.patients.name}`, 20, 45);
-        doc.text(`OP No: ${report.patients.opno}`, 20, 52);
-        doc.text(`Report Date: ${new Date(report.report_date).toLocaleDateString()}`, 20, 59);
-        doc.text(`Report Type: ${report.report_name}`, 20, 66);
-        doc.text(`Generated on: ${dateTime.readable}`, 20, 73);
-
-        // Parameters table
-        const tableData: string[][] = [];
-        Object.entries(report.parameters).forEach(([key, value]) => {
-            if (typeof value === 'object' && value !== null) {
-                Object.entries(value).forEach(([subKey, subValue]) => {
-                    tableData.push([`${key} - ${subKey}`, String(subValue || 'N/A')]);
-                });
-            } else {
-                tableData.push([key, String(value || 'N/A')]);
-            }
-        });
-
-        autoTable(doc, {
-            head: [['Parameter', 'Value']],
-            body: tableData,
-            startY: 85,
-            styles: { fontSize: 10 },
-            headStyles: { fillColor: [68, 114, 196], textColor: 255 },
-            alternateRowStyles: { fillColor: [245, 245, 245] }
-        });
-
-        window.open(doc.output('bloburl'), '_blank');
+    const handleViewReport = (reportId: string) => {
+        router.push(`/dashboard/lab-reports/view/${reportId}`);
     };
 
     const handleExport = async (format: string) => {
         const data = reports;
-        const headers = ['Sl.No', 'OP No', 'Name', 'Report Name', 'Date'];
+        const headers = ['Sl.No', 'SID No', 'Patient ID', 'Name', 'Age/Sex', 'Referred By', 'Reported Date'];
 
         switch (format) {
             case 'csv':
@@ -323,8 +142,6 @@ export default function ReportsPage() {
             case 'pdf':
                 exportToPDF(data, headers);
                 break;
-            default:
-                break;
         }
         setExportDropdownOpen(false);
     };
@@ -333,27 +150,27 @@ export default function ReportsPage() {
         const dateTime = getISTDateTime();
         const BOM = '\uFEFF';
         const csvContent = [
-            `"Reports - ${selectedDate}"`,
+            `"Reports - ${selectedDate || 'Search Results'}"`,
             `"Generated on: ${dateTime.readable}"`,
             `"Total Records: ${data.length}"`,
             `""`,
             headers.map(header => `"${header}"`).join(','),
             ...data.map((report, index) => [
                 index + 1,
-                `"${report.patients.opno}"`,
-                `"${report.patients.name.replace(/"/g, '""')}"`,
-                `"${report.report_name.replace(/"/g, '""')}"`,
-                `"${new Date(report.report_date).toLocaleDateString()}"`,
+                `"${report.sid_no || '-'}"`,
+                `"${report.patient_id}"`,
+                `"${report.patient_name.replace(/"/g, '""')}"`,
+                `"${report.age} / ${report.sex}"`,
+                `"${report.referred_by || '-'}"`,
+                `"${new Date(report.reported_date).toLocaleDateString()}"`,
             ].join(','))
         ].join('\r\n');
 
-        const blob = new Blob([BOM + csvContent], {
-            type: 'text/csv;charset=utf-8'
-        });
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `reports-${selectedDate}-${dateTime.filename}.csv`;
+        link.download = `reports-${selectedDate || 'search'}-${dateTime.filename}.csv`;
         link.click();
         URL.revokeObjectURL(url);
     };
@@ -363,7 +180,7 @@ export default function ReportsPage() {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Reports');
 
-        worksheet.addRow([`Reports - ${selectedDate}`]);
+        worksheet.addRow([`Reports - ${selectedDate || 'Search Results'}`]);
         worksheet.addRow([`Generated on: ${dateTime.readable}`]);
         worksheet.addRow([`Total Records: ${data.length}`]);
         worksheet.addRow([]);
@@ -374,21 +191,23 @@ export default function ReportsPage() {
 
         worksheet.addRow(headers);
 
-        worksheet.getRow(5).font = { bold: true };
-        worksheet.getRow(5).fill = {
+        const headerRow = worksheet.getRow(5);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = {
             type: 'pattern',
             pattern: 'solid',
             fgColor: { argb: 'FF4472C4' }
         };
-        worksheet.getRow(5).font = { bold: true, color: { argb: 'FFFFFFFF' } };
 
         data.forEach((report, index) => {
             worksheet.addRow([
                 index + 1,
-                report.patients.opno,
-                report.patients.name,
-                report.report_name,
-                new Date(report.report_date).toLocaleDateString()
+                report.sid_no || '-',
+                report.patient_id,
+                report.patient_name,
+                `${report.age} / ${report.sex}`,
+                report.referred_by || '-',
+                new Date(report.reported_date).toLocaleDateString()
             ]);
         });
 
@@ -397,14 +216,11 @@ export default function ReportsPage() {
         });
 
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        });
-
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `reports-${selectedDate}-${dateTime.filename}.xlsx`;
+        link.download = `reports-${selectedDate || 'search'}-${dateTime.filename}.xlsx`;
         link.click();
         URL.revokeObjectURL(url);
     };
@@ -415,7 +231,7 @@ export default function ReportsPage() {
 
         doc.setFontSize(20);
         doc.setTextColor(40, 40, 40);
-        doc.text(`Reports - ${selectedDate}`, 20, 25);
+        doc.text(`Reports - ${selectedDate || 'Search Results'}`, 20, 25);
 
         doc.setFontSize(12);
         doc.setTextColor(80, 80, 80);
@@ -424,690 +240,221 @@ export default function ReportsPage() {
 
         const tableData = data.map((report, index) => [
             index + 1,
-            report.patients.opno,
-            report.patients.name,
-            report.report_name,
-            new Date(report.report_date).toLocaleDateString()
+            report.sid_no || '-',
+            report.patient_id,
+            report.patient_name,
+            `${report.age} / ${report.sex}`,
+            report.referred_by || '-',
+            new Date(report.reported_date).toLocaleDateString()
         ]);
 
         autoTable(doc, {
             head: [headers],
             body: tableData,
             startY: 50,
-            styles: { fontSize: 8, cellPadding: 2 },
-            headStyles: { fillColor: [68, 114, 196], textColor: 255, fontStyle: 'bold' },
-            alternateRowStyles: { fillColor: [245, 245, 245] },
-            columnStyles: {
-                0: { halign: 'center', cellWidth: 15 },
-                1: { halign: 'center', cellWidth: 25 },
-                2: { cellWidth: 50 },
-                3: { cellWidth: 40 },
-                4: { halign: 'center', cellWidth: 30 },
-            }
+            styles: { fontSize: 10 },
+            headStyles: { fillColor: [68, 114, 196] },
         });
 
-        doc.save(`reports-${selectedDate}-${dateTime.filename}.pdf`);
+        doc.save(`reports-${selectedDate || 'search'}-${dateTime.filename}.pdf`);
     };
 
-    const handleParameterChange = (paramName: string, value: string | boolean, section?: string) => {
-        setEditFormData(prev => ({
-            ...prev,
-            parameters: {
-                ...prev.parameters,
-                ...(section ? {
-                    [section]: {
-                        ...prev.parameters[section],
-                        [paramName]: value
-                    }
-                } : {
-                    [paramName]: value
-                })
-            }
-        }));
-    };
+    const totalPages = useMemo(() => {
+        return pageSize === 0 ? 1 : Math.ceil(reports.length / pageSize);
+    }, [reports.length, pageSize]);
 
-    const handleSubmitEdit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingReport) return;
-
-        setLoading(true);
-
-        try {
-            const response = await fetch('/api/reports', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    authorization: doctorId!.toString()
-                },
-                body: JSON.stringify({
-                    id: editingReport.id,
-                    patient_id: editingReport.patients.id,
-                    report_date: editFormData.date,
-                    report_name: editFormData.reportGroup,
-                    parameters: editFormData.parameters
-                })
-            });
-
-            if (response.ok) {
-                await fetchReports();
-                setShowEditModal(false);
-                setEditingReport(null);
-                setEditFormData({ date: '', reportGroup: '', parameters: {} });
-            } else {
-                const error = await response.json();
-                alert('Error: ' + error.error);
-            }
-        } catch (error) {
-            console.error('Error updating report:', error);
-            alert('Error updating report');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const renderParameterInputs = () => {
-        const categoryParams = TEST_CATEGORIES[editFormData.reportGroup as keyof typeof TEST_CATEGORIES];
-
-        if (!categoryParams) return null;
-
-        if (Array.isArray(categoryParams)) {
-            return (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {categoryParams.map((param) => (
-                        <div key={param}>
-                            <label className="block text-sm font-medium text-muted-foreground mb-1">
-                                {param}
-                            </label>
-                            <input
-                                type="text"
-                                value={editFormData.parameters[param] || ''}
-                                onChange={(e) => handleParameterChange(param, e.target.value)}
-                                className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            />
-                        </div>
-                    ))}
-                </div>
-            );
-        } else if (typeof categoryParams === 'object') {
-            return (
-                <div className="space-y-6">
-                    {Object.entries(categoryParams).map(([section, params]) => (
-                        <div key={section}>
-                            <h4 className="text-lg font-medium text-foreground mb-3 border-b border-border pb-2">
-                                {section}
-                            </h4>
-                            {section === 'RESISTANCE' ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                    {(params as string[]).map((param) => (
-                                        <div key={param} className="flex items-center space-x-2">
-                                            <input
-                                                type="checkbox"
-                                                id={`${section}-${param}`}
-                                                checked={editFormData.parameters[section]?.[param] || false}
-                                                onChange={(e) => handleParameterChange(param, e.target.checked, section)}
-                                                className="rounded border-border text-primary focus:ring-primary"
-                                            />
-                                            <label htmlFor={`${section}-${param}`} className="text-sm text-muted-foreground">
-                                                {param}
-                                            </label>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {(params as string[]).map((param) => (
-                                        <div key={param}>
-                                            <label className="block text-sm font-medium text-muted-foreground mb-1">
-                                                {param}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={editFormData.parameters[section]?.[param] || ''}
-                                                onChange={(e) => handleParameterChange(param, e.target.value, section)}
-                                                className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            );
-        }
-
-        return null;
-    };
-
-    const generatePageNumbers = () => {
-        const pages = [];
-        const maxVisible = 5;
-        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-        let end = Math.min(totalPages, start + maxVisible - 1);
-
-        if (end - start + 1 < maxVisible) {
-            start = Math.max(1, end - maxVisible + 1);
-        }
-
-        for (let i = start; i <= end; i++) {
-            pages.push(i);
-        }
-        return pages;
-    };
-
-    const handlePageChange = (newPage: number) => {
-        if (newPage > currentPage) {
-            setPageDirection(1);
-        } else {
-            setPageDirection(-1);
-        }
-        setCurrentPage(newPage);
-    };
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as Element;
-            if (!target.closest('.dropdown-container')) {
-                setDropdownOpen(null);
-                setExportDropdownOpen(false);
-            }
-        };
-        document.addEventListener('click', handleClickOutside);
-        return () => document.removeEventListener('click', handleClickOutside);
-    }, []);
-
-    const pageVariants = {
-        initial: (direction: number) => ({
-            x: direction > 0 ? 200 : -200,
-            opacity: 0,
-        }),
-        in: {
-            x: 0,
-            opacity: 1,
-        },
-        out: (direction: number) => ({
-            x: direction < 0 ? 200 : -200,
-            opacity: 0,
-        }),
-    };
-
-    const pageTransition = {
-        type: 'tween',
-        ease: 'anticipate',
-        duration: 0.2,
-    };
+    const paginatedData = useMemo(() => {
+        if (pageSize === 0) return reports;
+        const startIndex = (currentPage - 1) * pageSize;
+        return reports.slice(startIndex, startIndex + pageSize);
+    }, [reports, currentPage, pageSize]);
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Reports</h1>
-                    <p className="text-muted-foreground">View and manage daily reports</p>
-                </div>
+        <div className="flex-1 p-8 bg-background min-h-screen">
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-7xl mx-auto"
+            >
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 className="text-3xl font-bold text-foreground">Lab Reports</h1>
+                        <p className="text-muted-foreground mt-1">View, search, and manage patient lab reports</p>
+                    </div>
 
-                <div className="flex space-x-3">
-                    {/* Export Dropdown */}
-                    <div className="relative dropdown-container">
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setExportDropdownOpen(!exportDropdownOpen);
-                            }}
-                            className="bg-secondary text-foreground px-4 py-2 rounded-lg hover:bg-secondary/80 transition-colors flex items-center space-x-2 cursor-pointer border border-border"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span>Export</span>
-                        </button>
+                    <div className="flex gap-4 items-center">
+                        {/* Search Input */}
+                        {!patientIdParam && (
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </span>
+                                <input
+                                    type="text"
+                                    placeholder="Search SID, Name, ID..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10 pr-4 py-2 bg-secondary/50 border border-border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm w-64 text-foreground placeholder-muted-foreground transition-all"
+                                />
+                            </div>
+                        )}
 
-                        <AnimatePresence>
-                            {exportDropdownOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    transition={{ duration: 0.15 }}
-                                    className="absolute right-0 mt-2 w-48 bg-card rounded-md shadow-xl border border-border z-10"
-                                >
-                                    <div className="py-1">
+                        {!patientIdParam && !searchQuery && (
+                            <div className="bg-card p-2 rounded-lg shadow-sm border border-border flex items-center">
+                                <span className="text-sm text-muted-foreground mr-2 ml-2">Date:</span>
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="outline-none text-foreground bg-transparent font-medium text-sm p-1 rounded hover:bg-secondary/50 cursor-pointer"
+                                />
+                            </div>
+                        )}
+
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
+                                className="px-4 py-2 bg-card border border-border rounded-lg shadow-sm text-foreground hover:bg-secondary/80 flex items-center gap-2 transition-colors"
+                            >
+                                <span>Export</span>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <AnimatePresence>
+                                {exportDropdownOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-xl border border-border z-50 overflow-hidden"
+                                    >
                                         <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                handleExport('csv');
-                                            }}
-                                            className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
+                                            onClick={() => handleExport('csv')}
+                                            className="w-full text-left px-4 py-3 hover:bg-secondary/50 text-sm text-foreground border-b border-border flex items-center gap-2"
                                         >
-                                            Export as CSV
+                                            <span className="text-green-500 font-bold">CSV</span> Download as CSV
                                         </button>
                                         <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                handleExport('excel');
-                                            }}
-                                            className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
+                                            onClick={() => handleExport('excel')}
+                                            className="w-full text-left px-4 py-3 hover:bg-secondary/50 text-sm text-foreground border-b border-border flex items-center gap-2"
                                         >
-                                            Export as Excel
+                                            <span className="text-emerald-500 font-bold">XLSX</span> Download as Excel
                                         </button>
                                         <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                handleExport('pdf');
-                                            }}
-                                            className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
+                                            onClick={() => handleExport('pdf')}
+                                            className="w-full text-left px-4 py-3 hover:bg-secondary/50 text-sm text-foreground flex items-center gap-2"
                                         >
-                                            Export as PDF
+                                            <span className="text-red-500 font-bold">PDF</span> Download as PDF
                                         </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Date Selection */}
-            <div className="bg-card p-4 rounded-lg border border-border shadow-sm">
-                <div className="flex items-center space-x-4">
-                    <div className="flex-1">
-                        <label className="block text-sm font-medium text-muted-foreground mb-2">
-                            Select Date
-                        </label>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="w-full max-w-xs bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                        />
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                        {reports.length} reports found for {new Date(selectedDate).toLocaleDateString()}
-                    </div>
-                </div>
-            </div>
-
-            {/* Page Size Selector */}
-            <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                    <span className="text-sm text-muted-foreground">Show</span>
-                    <select
-                        value={pageSize}
-                        onChange={(e) => setPageSize(Number(e.target.value))}
-                        className="bg-secondary/50 border border-border rounded-md px-3 py-1 text-sm text-foreground cursor-pointer focus:outline-none focus:ring-primary focus:border-primary"
-                    >
-                        <option value={10}>10</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                        <option value={0}>All</option>
-                    </select>
-                    <span className="text-sm text-muted-foreground">entries</span>
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                    {pageSize === 0
-                        ? `Showing 1 to ${reports.length} of ${reports.length} entries`
-                        : `Showing ${(currentPage - 1) * pageSize + 1} to ${Math.min(currentPage * pageSize, reports.length)} of ${reports.length} entries`
-                    }
-                </div>
-            </div>
-
-            {/* Reports Table */}
-            <div className="bg-card shadow-sm rounded-lg border border-border overflow-hidden">
-                <div className="overflow-x-auto" style={{ position: 'relative', zIndex: 1 }}>
-                    <table className="min-w-full divide-y divide-border">
-
-                        <thead className="bg-secondary/50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-20">
-                                    Sl.No
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                    OP No
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                    Name
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                    Report Name
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-20">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-card divide-y divide-border">
-                            <AnimatePresence mode="wait" custom={pageDirection}>
-                                {paginatedData.map((report, index) => {
-                                    const sequentialNumber = pageSize === 0
-                                        ? index + 1
-                                        : (currentPage - 1) * pageSize + index + 1;
-
-                                    return (
-                                        <motion.tr
-                                            key={`${currentPage}-${report.id}`}
-                                            custom={pageDirection}
-                                            variants={pageVariants}
-                                            initial="initial"
-                                            animate="in"
-                                            exit="out"
-                                            transition={pageTransition}
-                                            className="hover:bg-secondary/30"
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                                                {sequentialNumber}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
-                                                {report.patients.opno}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-card rounded-xl shadow-sm border border-border overflow-hidden"
+                >
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="bg-secondary/30 border-b border-border">
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sl.No</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">SID No</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patient ID</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patient Name</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Age / Sex</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reported Date</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                                            <div className="flex justify-center items-center gap-3">
+                                                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                                Fetching reports...
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : reports.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                                            {searchQuery ? `No reports found matching "${searchQuery}"` : 'No reports found for the selected date'}
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    paginatedData.map((report, index) => (
+                                        <tr key={report.id} className="hover:bg-secondary/30 transition-colors">
+                                            <td className="px-6 py-4 text-sm text-muted-foreground">
+                                                {(currentPage - 1) * pageSize + index + 1}
                                             </td>
                                             <td className="px-6 py-4 text-sm font-medium text-foreground">
-                                                {report.patients.name}
+                                                {report.sid_no || '-'}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-foreground">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500">
-                                                    {report.report_name}
-                                                </span>
+                                            <td className="px-6 py-4 text-sm text-muted-foreground">
+                                                {report.patient_id}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="relative dropdown-container">
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            handleDropdownToggle(report.id, e.currentTarget, index);
-                                                        }}
-                                                        className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-secondary cursor-pointer transition-colors"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                                        </svg>
-                                                    </button>
-
-
-                                                    <AnimatePresence>
-                                                        {dropdownOpen === report.id && (
-                                                            <motion.div
-                                                                ref={dropdownRef}
-                                                                initial={{ opacity: 0, scale: 0.95 }}
-                                                                animate={{ opacity: 1, scale: 1 }}
-                                                                exit={{ opacity: 0, scale: 0.95 }}
-                                                                transition={{ duration: 0.15 }}
-                                                                className="w-32 bg-card rounded-md shadow-xl border border-border"
-                                                                style={{
-                                                                    position: dropdownPosition.position,
-                                                                    top: dropdownPosition.top,
-                                                                    left: dropdownPosition.left,
-                                                                    right: dropdownPosition.right,
-                                                                    zIndex: dropdownPosition.zIndex
-                                                                }}
-                                                            >
-                                                                <div className="py-1">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleView(report)}
-                                                                        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
-                                                                    >
-                                                                        View
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleEdit(report)}
-                                                                        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
-                                                                    >
-                                                                        Edit
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handlePrint(report)}
-                                                                        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
-                                                                    >
-                                                                        Print
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleDelete(report.id)}
-                                                                        className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-secondary cursor-pointer transition-colors"
-                                                                    >
-                                                                        Delete
-                                                                    </button>
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-                                                </div>
+                                            <td className="px-6 py-4 text-sm font-medium text-foreground">
+                                                {report.patient_name}
                                             </td>
-                                        </motion.tr>
-                                    );
-                                })}
-                            </AnimatePresence>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                            <td className="px-6 py-4 text-sm text-muted-foreground">
+                                                {report.age} / {report.sex}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-muted-foreground">
+                                                {new Date(report.reported_date).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => handleViewReport(report.id)}
+                                                    className="inline-flex items-center px-3 py-1.5 border border-primary text-primary text-xs font-medium rounded-md hover:bg-primary/10 transition-colors"
+                                                >
+                                                    View Report
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
-            {/* Pagination */}
-            {pageSize > 0 && totalPages > 1 && (
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            type="button"
-                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1}
-                            className="px-3 py-2 border border-border rounded-md text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
-                        >
-                            Previous
-                        </motion.button>
-
-                        <div className="flex space-x-1">
-                            {generatePageNumbers().map((page) => (
-                                <motion.button
-                                    key={page}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    type="button"
-                                    onClick={() => handlePageChange(page)}
-                                    className={`px-3 py-2 border text-sm font-medium rounded-md cursor-pointer transition-colors ${currentPage === page
-                                        ? 'bg-primary text-primary-foreground border-primary'
-                                        : 'border-border text-muted-foreground hover:bg-secondary'
-                                        }`}
-                                >
-                                    {page}
-                                </motion.button>
-                            ))}
+                    {/* Pagination */}
+                    <div className="bg-secondary/10 px-6 py-4 border-t border-border flex items-center justify-between">
+                        <div className="text-sm text-muted-foreground">
+                            Showing <span className="font-medium text-foreground">{reports.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> to <span className="font-medium text-foreground">{Math.min(currentPage * pageSize, reports.length)}</span> of <span className="font-medium text-foreground">{reports.length}</span> results
                         </div>
-
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            type="button"
-                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-3 py-2 border border-border rounded-md text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
-                        >
-                            Next
-                        </motion.button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 border border-border rounded-md text-sm disabled:opacity-50 hover:bg-secondary text-foreground transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <span className="px-3 py-1 text-sm font-medium text-foreground bg-secondary/50 border border-border rounded-md">
+                                {currentPage} / {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1 border border-border rounded-md text-sm disabled:opacity-50 hover:bg-secondary text-foreground transition-colors"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
-
-                    <div className="text-sm text-muted-foreground">
-                        Page {currentPage} of {totalPages}
-                    </div>
-                </div>
-            )}
-
-            {/* View Modal */}
-            <AnimatePresence>
-                {showModal && viewingReport && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            transition={{ type: "spring", duration: 0.5 }}
-                            className="bg-card rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-6 shadow-2xl border border-border"
-                        >
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-medium text-foreground">
-                                    View Report - {viewingReport.report_name}
-                                </h3>
-                                <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    type="button"
-                                    onClick={() => {
-                                        setShowModal(false);
-                                        setViewingReport(null);
-                                    }}
-                                    className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </motion.button>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-secondary/30 rounded-lg">
-                                    <div><strong>Patient:</strong> {viewingReport.patients.name}</div>
-                                    <div><strong>OP No:</strong> {viewingReport.patients.opno}</div>
-                                    <div><strong>Date:</strong> {new Date(viewingReport.report_date).toLocaleDateString()}</div>
-                                    <div><strong>Report Type:</strong> {viewingReport.report_name}</div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {Object.entries(viewingReport.parameters).map(([key, value]) => (
-                                        <div key={key} className="border border-border rounded-lg p-4">
-                                            <h4 className="font-medium text-foreground mb-3">{key}</h4>
-                                            {typeof value === 'object' && value !== null ? (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                                                    {Object.entries(value).map(([subKey, subValue]) => (
-                                                        <div key={subKey} className="text-sm">
-                                                            <span className="font-medium text-muted-foreground">{subKey}:</span>
-                                                            <span className="ml-2 text-foreground">
-                                                                {typeof subValue === 'boolean' ? (subValue ? 'Yes' : 'No') : String(subValue || 'N/A')}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-sm text-foreground">{String(value || 'N/A')}</div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Edit Modal */}
-            <AnimatePresence>
-                {showEditModal && editingReport && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            transition={{ type: "spring", duration: 0.5 }}
-                            className="bg-card rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl border border-border"
-                        >
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-medium text-foreground">
-                                    Edit Report - {editingReport.patients.name}
-                                </h3>
-                                <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    type="button"
-                                    onClick={() => {
-                                        setShowEditModal(false);
-                                        setEditingReport(null);
-                                        setEditFormData({ date: '', reportGroup: '', parameters: {} });
-                                    }}
-                                    className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </motion.button>
-                            </div>
-
-                            <form onSubmit={handleSubmitEdit} className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-secondary/30 rounded-lg">
-                                    <div><strong>Patient:</strong> {editingReport.patients.name}</div>
-                                    <div><strong>OP No:</strong> {editingReport.patients.opno}</div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-1">Date</label>
-                                        <input
-                                            type="date"
-                                            value={editFormData.date}
-                                            onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
-                                            className="border border-border rounded-lg px-3 py-2 text-foreground bg-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                        />
-                                    </div>
-                                    <div><strong>Report Type:</strong> {editFormData.reportGroup}</div>
-                                </div>
-
-                                <div className="border border-border rounded-lg p-4">
-                                    <h4 className="text-lg font-medium text-foreground mb-4">
-                                        Test Parameters - {editFormData.reportGroup}
-                                    </h4>
-                                    {renderParameterInputs()}
-                                </div>
-
-                                <div className="flex justify-end space-x-3 pt-6">
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        type="button"
-                                        onClick={() => {
-                                            setShowEditModal(false);
-                                            setEditingReport(null);
-                                            setEditFormData({ date: '', reportGroup: '', parameters: {} });
-                                        }}
-                                        className="px-4 py-2 border border-border rounded-lg text-muted-foreground hover:bg-secondary transition-colors cursor-pointer"
-                                    >
-                                        Cancel
-                                    </motion.button>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        type="submit"
-                                        disabled={loading}
-                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center space-x-2 cursor-pointer"
-                                    >
-                                        {loading && (
-                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                        )}
-                                        <span>{loading ? 'Updating...' : 'Update Report'}</span>
-                                    </motion.button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                </motion.div>
+            </motion.div>
         </div>
     );
 }

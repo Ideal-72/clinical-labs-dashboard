@@ -101,7 +101,7 @@ export const testTemplates: TestTemplates = {
             method: "Enzymatic: Trinder's Method",
             clinicalNote: "Random blood glucose can be taken at any time without fasting. Levels ≥200 mg/dL with symptoms of diabetes (increased thirst, frequent urination, fatigue) confirm diabetes diagnosis. **This test is useful for quick screening and monitoring.**"
         },
-        "Glucose PP": {
+        "Glucose Post Prandial": {
             units: "mg/dL",
             referenceRange: "70-160",
             specimen: "Serum/Plasma",
@@ -264,7 +264,7 @@ export const testTemplates: TestTemplates = {
         "Potassium.": { units: "mEq/L", referenceRange: "3.5 - 5.0", specimen: "Serum", method: "ISE" },
         "Chloride.": { units: "mEq/L", referenceRange: "95 - 106", specimen: "Serum", method: "ISE" },
         "Bicarbonate.": { units: "mEq/L", referenceRange: "22 - 29", specimen: "Serum", method: "Enzymatic" },
-        "Cardiac Troponin 2": {
+        "Cardiac Troponin": {
             type: 'group_header',
             units: "",
             referenceRange: "",
@@ -376,7 +376,7 @@ export const testTemplates: TestTemplates = {
         },
         "CRP": {
             units: "mg/L",
-            referenceRange: "Lessthan6.0",
+            referenceRange: "Less than 5",
             specimen: "Serum",
             method: "Sandwich Immunodetection",
             clinicalNote: "The CRP response frequently precedes clinical symptoms such as infections, inflammatory diseases and malignant neoplasms. Alterations are detectable within 6 to 8 hours and the peak value is reached within 24 to 48 hours. Levels of up to thousandfold the normal value are associated with severe stimuli such as myocardial infarction, major trauma, surgery, or malignant neoplasms. CRP levels can be elevated in the later stages of pregnancy, birth control pills or hormone replacement therapy (i.e., estrogen) and obesity. Significantly decreased CRP values may be obtained from samples taken from patients who have been treated with carboxypenicillins. In very rare cases, gammopathy, in particular type IgM (Waldenström’s macroglobulinemia) and patients who have been treated or received monoclonal mouse antibodies, may cause unreliable results. **CRP determination may replace the classical determination of Erythrocytes Sedimentation Rate (ESR), due to its prompt response to changes in disease activity (CRP increases sooner and then decreases more rapidly than the ESR) and its good correlation to ESR.**"
@@ -419,7 +419,7 @@ export const testTemplates: TestTemplates = {
         "COLOUR": { units: "", referenceRange: "(Naked Eye Examination)", specimen: "URINE", method: "Macroscopic" },
         "SP.GRAVITY": { units: "", referenceRange: "1.000-1.030", specimen: "URINE", method: "Strip Manual" },
         "pH": { units: "", referenceRange: "5 - 9", specimen: "URINE", method: "Strip Manual" },
-        "PROTEIN.": { units: "(mmol/L)", referenceRange: "0.15 - 3.0 (g/L)", specimen: "URINE", method: "Strip Manual" },
+        "PROTEIN.": { units: "g/L", referenceRange: "0.15 - 3.0", specimen: "URINE", method: "Strip Manual" },
         "GLUCOSE": { units: "mmol/L", referenceRange: "5 - 110", specimen: "URINE", method: "Strip Manual" },
         "BILIRUBIN": { units: "(mg/dL)", referenceRange: "1 - 4", specimen: "URINE", method: "Strip Manual" },
         "UROBILINOGEN": { units: "(mg/dL)", referenceRange: "1 - 12", specimen: "URINE", method: "Strip Manual" },

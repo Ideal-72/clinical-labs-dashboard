@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   switch (method) {
     case 'GET':
       const { date } = req.query;
-      
+
       let query = supabase
         .from('observations')
         .select(`
@@ -29,20 +29,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         query = query.eq('report_date', date);
       }
 
+      const { patient_id } = req.query;
+      if (patient_id) {
+        query = query.eq('patient_id', patient_id);
+      }
+
       const { data: reports, error: fetchError } = await query;
 
       if (fetchError) {
         return res.status(500).json({ error: fetchError.message });
       }
-      
+
       return res.status(200).json(reports || []);
 
     case 'PUT':
       const { id, patient_id: updatePatientId, report_date: updateDate, report_name: updateName, parameters: updateParams } = req.body;
-      
+
       const { data: updatedReport, error: updateError } = await supabase
         .from('observations')
-        .update({ 
+        .update({
           patient_id: updatePatientId,
           report_date: updateDate,
           report_name: updateName,
@@ -62,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (updateError) {
         return res.status(500).json({ error: updateError.message });
       }
-      
+
       return res.status(200).json(updatedReport);
 
     case 'DELETE':
