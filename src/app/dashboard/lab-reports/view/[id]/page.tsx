@@ -542,7 +542,6 @@ export default function ViewLabReportPage() {
                                                             {mainTests.length === 0 && (
                                                                 <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-bold text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{section.section_name}</td></tr>
                                                             )}
-                                                            {renderTestRows(stickyTests, section.tests, section.section_name, splitIndex)}
                                                         </tbody>
                                                     </table>
                                                 )}
@@ -554,14 +553,26 @@ export default function ViewLabReportPage() {
                                                     <div className="break-inside-avoid page-break-inside-avoid">
                                                         <table className="w-full border-collapse border-x border-b border-gray-400 text-sm print:text-xs">
                                                             {/* Invisible Header to enforce widths */}
-                                                            <thead className="invisible h-0 overflow-hidden leading-none">
-                                                                <tr className="h-0 p-0 m-0 border-0">
-                                                                    <th className="p-0 m-0 w-[40%] border-0"></th>
-                                                                    <th className="p-0 m-0 w-[15%] border-0"></th>
-                                                                    <th className="p-0 m-0 w-[15%] border-0"></th>
-                                                                    <th className="p-0 m-0 w-[30%] border-0"></th>
-                                                                </tr>
-                                                            </thead>
+                                                            {/* Render Header logic: If mainTests is empty, we MUST render the full header here. Otherwise invisible to enforce column widths. */}
+                                                            {mainTests.length === 0 ? (
+                                                                <thead>
+                                                                    <tr className="bg-gray-100 print:bg-gray-50 border-y border-gray-400">
+                                                                        <th className="p-2 print:p-1 text-left w-[40%] font-bold text-black border-r border-gray-300">Test Name / Specimen</th>
+                                                                        <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Result</th>
+                                                                        <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Units</th>
+                                                                        <th className="p-2 print:p-1 text-left w-[30%] font-bold text-black">Reference Range / Method</th>
+                                                                    </tr>
+                                                                </thead>
+                                                            ) : (
+                                                                <thead className="invisible h-0 overflow-hidden leading-none">
+                                                                    <tr className="h-0 p-0 m-0 border-0">
+                                                                        <th className="p-0 m-0 w-[40%] border-0"></th>
+                                                                        <th className="p-0 m-0 w-[15%] border-0"></th>
+                                                                        <th className="p-0 m-0 w-[15%] border-0"></th>
+                                                                        <th className="p-0 m-0 w-[30%] border-0"></th>
+                                                                    </tr>
+                                                                </thead>
+                                                            )}
                                                             <tbody>
                                                                 {/* Only render header if main table was empty (unlikely, but safe) */}
                                                                 {mainTests.length === 0 && (

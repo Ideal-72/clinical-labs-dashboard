@@ -148,7 +148,7 @@ export const testTemplates: TestTemplates = {
         "Albumin/Globulin": { units: "Ratio", referenceRange: "", specimen: "Serum", method: "Calculated" },
         "PREGNANCY CARD TEST": {
             units: "",
-            referenceRange: "Positive / Negative",
+            referenceRange: "Quantitative detection",
             specimen: "Urine",
             method: "Immunochromatography Card",
             clinicalNote: "Pregnancy card test is a rapid, at-home diagnostic immunoassay used to detect the presence of the human Chorionic Gonadotropin (hCG) hormone in urine which indicates Pregnancy. This is only Screening test. **Suggest to do Beta HCG Quantitative methods for confirmation.**"
