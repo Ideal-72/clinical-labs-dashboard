@@ -121,6 +121,25 @@ export default function CreateLabReportPage() {
     useEffect(() => {
         if (!patientDetails.sex) return;
 
+        // Auto-update Name Prefix
+        setPatientDetails(prev => {
+            let newName = prev.patientName;
+            // Remove existing prefixes to avoid duplication/conflicts
+            newName = newName.replace(/^(Mr\.|Mrs\.|Ms\.|Miss\.|Master\.)\s*/i, '');
+
+            if (newName.trim()) {
+                if (patientDetails.sex === 'Male') {
+                    // Simple heuristic: If age < 12 maybe Master? But user asked for Mr. specifically. Stick to Mr.
+                    newName = `Mr. ${newName}`;
+                } else if (patientDetails.sex === 'Female') {
+                    // Default to Mrs. for now as it's common in this specific lab's context context, or maybe Ms. 
+                    // Let's use Mrs. as it's the requested parallel to Mr. usually.
+                    newName = `Mrs. ${newName}`;
+                }
+            }
+            return { ...prev, patientName: newName };
+        });
+
         setSections(currentSections =>
             currentSections.map(section => ({
                 ...section,
@@ -336,40 +355,48 @@ export default function CreateLabReportPage() {
 
         // --- LIPID PROFILE ---
         const trig = getVal('Triglycerides');
-        const chol = getVal('Cholesterol Total') || getVal('Total Cholesterol');
-        const hdl = getVal('HDL Cholesterol') || getVal('HDL');
+        const chol = getVal('Cholesterol,Total');
+        const hdl = getVal('Cholesterol,HDL');
 
         if (trig !== null) {
             const vldl = (trig / 5).toFixed(1);
-            setVal('VLDL Cholesterol', vldl);
+            setVal('Cholesterol,VLDL', vldl);
         }
 
-        const vldl = getVal('VLDL Cholesterol') || getVal('VLDL'); // Re-fetch
+        const vldl = getVal('Cholesterol,VLDL'); // Re-fetch
 
         if (chol !== null && hdl !== null) {
-            setVal('Non-HDL Cholesterol', (chol - hdl).toFixed(1));
-            if (hdl !== 0) setVal('Total Cholesterol/HDL Ratio', (chol / hdl).toFixed(1));
+            setVal('Non-HDLCholesterol', (chol - hdl).toFixed(1));
+            // Note: Template has 'Cholesterol/HDLRatio', not 'Total Cholesterol/HDL Ratio'
+            if (hdl !== 0) {
+                setVal('Cholesterol/HDLRatio', (chol / hdl).toFixed(1));
+            }
         }
 
         if (chol !== null && hdl !== null && vldl !== null) {
             const ldlVal = (chol - hdl - vldl).toFixed(1);
-            setVal('LDL Cholesterol', ldlVal);
+            setVal('Cholesterol,LDL', ldlVal);
         }
 
-        const ldl = getVal('LDL Cholesterol') || getVal('LDL');
+        const ldl = getVal('Cholesterol,LDL');
         if (ldl !== null && hdl !== null) {
-            if (hdl !== 0) setVal('LDL/HDL Ratio', (ldl / hdl).toFixed(1));
-            if (ldl !== 0) setVal('HDL/LDL Ratio', (hdl / ldl).toFixed(1));
+            if (hdl !== 0) {
+                setVal('LDL/HDLRatio', (ldl / hdl).toFixed(1));
+            }
+            if (ldl !== 0) {
+                setVal('HDL/LDLRatio', (hdl / ldl).toFixed(1));
+            }
         }
 
         // --- DIABETES ---
-        const hba1c = getVal('HbA1c');
+        const hba1c = getVal('HbA1c') || getVal('Glycosylated Haemoglobin (HbA1c)');
         if (hba1c !== null) {
-            setVal('eAG', ((28.7 * hba1c) - 46.7).toFixed(0));
+            setVal('Estimated Average Glucose (eAG)', ((28.7 * hba1c) - 46.7).toFixed(0));
+            setVal('eAG', ((28.7 * hba1c) - 46.7).toFixed(0)); // Keep legacy support just in case
         }
 
         // --- LFT (Biochemistry) ---
-        const tp = getVal('Total Protein');
+        const tp = getVal('TotalProtein.') || getVal('Total Protein');
         const alb = getVal('Albumin.') || getVal('Albumin');
         if (tp !== null && alb !== null) {
             const glob = (tp - alb).toFixed(1);
@@ -377,10 +404,10 @@ export default function CreateLabReportPage() {
             if (parseFloat(glob) !== 0) setVal('Albumin/Globulin', (alb / parseFloat(glob)).toFixed(1));
         }
 
-        const sgot = getVal('SGOT/AST') || getVal('SGOT');
-        const sgpt = getVal('SGPT/ALT') || getVal('SGPT');
+        const sgot = getVal('Aspartateaminotransferase(AST/SGOT)') || getVal('SGOT/AST');
+        const sgpt = getVal('Alanineaminotransferase(ALT/SGPT)') || getVal('SGPT/ALT');
         if (sgot !== null && sgpt !== null && sgpt !== 0) {
-            setVal('SGOT/SGPT Ratio', (sgot / sgpt).toFixed(1));
+            setVal('SGOT/SGPT', (sgot / sgpt).toFixed(1));
         }
 
         // --- ELECTROLYTES (KFT) ---
@@ -569,6 +596,23 @@ export default function CreateLabReportPage() {
                                         if (patientDetails.patientName && !patientDetails.sidNo) {
                                             fetchNextSid();
                                         }
+
+                                        // Apply Name Prefix on Blur
+                                        setPatientDetails(prev => {
+                                            let newName = prev.patientName;
+                                            // Make sure to match the compound prefix "Mrs./Ms." FIRST before "Mrs."
+                                            newName = newName.replace(/^(Mrs\.\/Ms\.|Mr\.|Mrs\.|Ms\.|Miss\.|Master\.)\s*/i, '');
+
+                                            if (newName.trim()) {
+                                                if (prev.sex === 'Male') {
+                                                    newName = `Mr. ${newName}`;
+                                                } else if (prev.sex === 'Female') {
+                                                    newName = `Mrs./Ms. ${newName}`;
+                                                }
+                                            }
+
+                                            return newName !== prev.patientName ? { ...prev, patientName: newName } : prev;
+                                        });
                                     }}
                                     className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
                                     placeholder="Enter patient name"

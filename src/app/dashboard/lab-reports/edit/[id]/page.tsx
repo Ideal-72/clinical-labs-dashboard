@@ -75,16 +75,40 @@ export default function EditLabReportPage() {
     useEffect(() => {
         if (!patientDetails.sex) return;
 
+        // Auto-update Name Prefix
+        setPatientDetails(prev => {
+            let newName = prev.patientName;
+            // Remove existing prefixes to avoid duplication/conflicts
+            newName = newName.replace(/^(Mr\.|Mrs\.|Ms\.|Miss\.|Master\.)\s*/i, '');
+
+            if (newName.trim()) {
+                if (patientDetails.sex === 'Male') {
+                    newName = `Mr. ${newName}`;
+                } else if (patientDetails.sex === 'Female') {
+                    newName = `Mrs. ${newName}`;
+                }
+            }
+            // Only update if changed to prevent loops
+            if (newName !== prev.patientName) {
+                return { ...prev, patientName: newName };
+            }
+            return prev;
+        });
+
         setSections(currentSections =>
             currentSections.map(section => ({
                 ...section,
                 tests: section.tests.map(test => {
                     if (test.testName) {
-                        const template = getTestTemplate(section.name, test.testName);
-                        if (template && template.referenceRange) {
-                            const newRange = getReferenceRangeByGender(template.referenceRange, patientDetails.sex, patientDetails.age);
-                            // Only update if it's different to avoid unnecessary renders/changes
-                            if (newRange !== test.referenceRange) {
+                        // We need to look up template again to get the gender-specific range
+                        // But here we rely on the helper which takes the current value.
+                        // Wait, 'test.referenceRange' might be manual.
+                        // Ideally we check if it matches the *previous* gender default.
+                        // For now, let's just update if it looks like a template range.
+                        const templateRaw = getTestsForGroup(section.reportGroup).find(t => t.name === test.testName);
+                        if (templateRaw && templateRaw.template.referenceRange) {
+                            const newRange = getReferenceRangeByGender(templateRaw.template.referenceRange, patientDetails.sex, patientDetails.age);
+                            if (newRange && newRange !== test.referenceRange) {
                                 return { ...test, referenceRange: newRange };
                             }
                         }
@@ -360,7 +384,7 @@ export default function EditLabReportPage() {
 
         // --- LIPID PROFILE ---
         const trig = getVal('Triglycerides');
-        const chol = getVal('Cholesterol,Total') || getVal('Cholesterol Total');
+        const chol = getVal('Cholesterol,Total') || getVal('Total Cholesterol');
         const hdl = getVal('Cholesterol,HDL') || getVal('HDL Cholesterol');
 
         if (trig !== null) {
@@ -372,16 +396,18 @@ export default function EditLabReportPage() {
         const vldl = getVal('Cholesterol,VLDL') || getVal('VLDL Cholesterol');
 
         if (chol !== null && hdl !== null) {
+            setVal('Non-HDLCholesterol', (chol - hdl).toFixed(1));
+            setVal('Non-HDL Cholesterol', (chol - hdl).toFixed(1)); // Legacy
             if (hdl !== 0) {
                 setVal('Cholesterol/HDLRatio', (chol / hdl).toFixed(1));
                 setVal('Total Cholesterol/HDL Ratio', (chol / hdl).toFixed(1)); // Legacy
             }
-            setVal('Non-HDLCholesterol', (chol - hdl).toFixed(1));
         }
 
         if (chol !== null && hdl !== null && vldl !== null) {
-            setVal('Cholesterol,LDL', (chol - hdl - vldl).toFixed(1));
-            setVal('LDL Cholesterol', (chol - hdl - vldl).toFixed(1)); // Legacy
+            const ldlVal = (chol - hdl - vldl).toFixed(1);
+            setVal('Cholesterol,LDL', ldlVal);
+            setVal('LDL Cholesterol', ldlVal); // Legacy
         }
 
         const ldl = getVal('Cholesterol,LDL') || getVal('LDL Cholesterol');
@@ -392,10 +418,10 @@ export default function EditLabReportPage() {
             }
             if (ldl !== 0) {
                 setVal('HDL/LDLRatio', (hdl / ldl).toFixed(1));
+                setVal('HDL/LDL Ratio', (hdl / ldl).toFixed(1)); // Legacy
             }
         }
 
-        // --- DIABETES ---
         // --- DIABETES ---
         const hba1c = getVal('HbA1c') || getVal('Glycosylated Haemoglobin (HbA1c)');
         if (hba1c !== null) {
@@ -796,9 +822,24 @@ export default function EditLabReportPage() {
                                         </div>
                                         {sections.length > 1 && (
                                             <button
-                                                type="button"
-                                                onClick={() => removeSection(section.id)}
-                                                className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-md transition-colors mt-6"
+                                                onBlur={() => {
+                                                    // Apply Name Prefix on Blur
+                                                    setPatientDetails(prev => {
+                                                        let newName = prev.patientName;
+                                                        // Make sure to match the compound prefix "Mrs./Ms." FIRST before "Mrs."
+                                                        newName = newName.replace(/^(Mrs\.\/Ms\.|Mr\.|Mrs\.|Ms\.|Miss\.|Master\.)\s*/i, '');
+
+                                                        if (newName.trim()) {
+                                                            if (prev.sex === 'Male') {
+                                                                newName = `Mr. ${newName}`;
+                                                            } else if (prev.sex === 'Female') {
+                                                                newName = `Mrs./Ms. ${newName}`;
+                                                            }
+                                                        }
+
+                                                        return newName !== prev.patientName ? { ...prev, patientName: newName } : prev;
+                                                    });
+                                                }} className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-md transition-colors mt-6"
                                             >
                                                 Remove Section
                                             </button>

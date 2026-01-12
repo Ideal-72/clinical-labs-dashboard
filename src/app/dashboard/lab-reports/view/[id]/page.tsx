@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Barcode from 'react-barcode';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 import { getReferenceRangeByGender } from '@/lib/getReferenceRangeByGender';
 import { getTestTemplate } from '@/lib/testTemplates';
@@ -444,7 +444,8 @@ export default function ViewLabReportPage() {
                     .report-section { page-break-inside: auto; break-inside: auto; }
                     table thead { display: table-header-group; }
                     .section-header-row { page-break-after: avoid; break-after: avoid; }
-                    table tbody tr { page-break-inside: avoid; break-inside: avoid; }
+                    /* Scope this to inner test tables only to prevent keeping the outer main row (entire report) on one page */
+                    .report-section table tbody tr { page-break-inside: avoid; break-inside: avoid; }
                     tr:has(td[colspan="4"]) { page-break-after: avoid; break-after: avoid; }
                     table thead { page-break-inside: avoid; page-break-after: avoid; }
                     * { widows: 2; orphans: 2; }
@@ -522,27 +523,32 @@ export default function ViewLabReportPage() {
                                         return (
                                             <div key={section.id} className={`report-section ${section.section_name?.toUpperCase().includes('RENAL') ? 'page-break' : ''}`}>
 
-                                                {/* Sticky Footer Wrapper: Contains Sticky Tests + Signature */}
-                                                <div className="sticky-footer-wrapper">
-                                                    {/* Main Table (Non-sticky part) */}
-                                                    {mainTests.length > 0 && (
-                                                        <table className="w-full border-collapse border-x border-b border-gray-400 text-sm print:text-xs mb-0">
-                                                            <thead>
-                                                                <tr className="hidden print:table-row h-6 bg-white"><th colSpan={4} className="bg-white" style={{ borderLeft: 'hidden', borderRight: 'hidden', borderTop: 'hidden' }}></th></tr>
-                                                                <tr className="bg-gray-100 print:bg-gray-50 border-y border-gray-400">
-                                                                    <th className="p-2 print:p-1 text-left w-[40%] font-bold text-black border-r border-gray-300">Test Name / Specimen</th>
-                                                                    <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Result</th>
-                                                                    <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Units</th>
-                                                                    <th className="p-2 print:p-1 text-left w-[30%] font-bold text-black">Reference Range / Method</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-bold text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{(() => { const name = section.section_name; const len = name.length; if (len > 0 && len % 2 === 0) { const half = len / 2; const first = name.substring(0, half); const second = name.substring(half); if (first.toLowerCase() === second.toLowerCase()) return first; } return name; })()}</td></tr>
-                                                                {renderTestRows(mainTests, section.tests, section.section_name, 0)}
-                                                            </tbody>
-                                                        </table>
-                                                    )}
+                                                {/* Main Table (Non-sticky part) - Flows normally */}
+                                                {mainTests.length > 0 && (
+                                                    <table className="w-full border-collapse border-x border-b border-gray-400 text-sm print:text-xs mb-0">
+                                                        <thead>
+                                                            <tr className="hidden print:table-row h-6 bg-white"><th colSpan={4} className="bg-white" style={{ borderLeft: 'hidden', borderRight: 'hidden', borderTop: 'hidden' }}></th></tr>
+                                                            <tr className="bg-gray-100 print:bg-gray-50 border-y border-gray-400">
+                                                                <th className="p-2 print:p-1 text-left w-[40%] font-bold text-black border-r border-gray-300">Test Name / Specimen</th>
+                                                                <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Result</th>
+                                                                <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Units</th>
+                                                                <th className="p-2 print:p-1 text-left w-[30%] font-bold text-black">Reference Range / Method</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-bold text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{(() => { const name = section.section_name; const len = name.length; if (len > 0 && len % 2 === 0) { const half = len / 2; const first = name.substring(0, half); const second = name.substring(half); if (first.toLowerCase() === second.toLowerCase()) return first; } return name; })()}</td></tr>
+                                                            {renderTestRows(mainTests, section.tests, section.section_name, 0)}
 
+                                                            {mainTests.length === 0 && (
+                                                                <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-bold text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{section.section_name}</td></tr>
+                                                            )}
+                                                            {renderTestRows(stickyTests, section.tests, section.section_name, splitIndex)}
+                                                        </tbody>
+                                                    </table>
+                                                )}
+
+                                                {/* Sticky Footer Wrapper: Contains Sticky Tests + Signature ONLY */}
+                                                <div className="sticky-footer-wrapper">
                                                     {/* Sticky Table (Last tests + Signature) */}
                                                     {/* We use a separate table but ensure column widths match. We hide header to keep alignment. */}
                                                     <div className="break-inside-avoid page-break-inside-avoid">
@@ -566,16 +572,21 @@ export default function ViewLabReportPage() {
                                                         </table>
 
                                                         {/* Signature inside same container */}
-                                                        <div className="flex justify-between items-end mt-4 mb-4 px-2">
-                                                            <div className="text-sm"><div className="border-t border-gray-400 pt-1 w-48"><span className="text-xs text-black font-semibold">Verified by</span></div></div>
-                                                            <div className="text-sm flex flex-col items-center">
-                                                                <img src="/signature-lalitha.jpg" alt="Signature" className="h-20 mb-[-15px] object-contain" />
-                                                                <div className="border-t border-gray-400 pt-1 w-48 text-center text-black"><div className="font-bold uppercase">K.LALITHA</div><div className="text-[10px] font-bold">BSC (MLT)</div><div className="text-[10px] font-semibold">Lab Incharge</div></div>
+                                                        <div className="flex justify-between items-end mt-2 mb-2 px-2">
+                                                            <div className="text-xs"><div className="border-t border-gray-400 pt-1 w-32"><span className="text-[10px] text-black font-bold">Verified by</span></div></div>
+                                                            <div className="text-xs flex flex-col items-center">
+                                                                <img src="/signature-lalitha.jpg" alt="Signature" className="h-12 mb-[-5px] object-contain" />
+                                                                <div className="border-t border-gray-400 pt-1 w-32 text-center text-black">
+                                                                    <p className="font-bold text-xs">K.LALITHA</p>
+                                                                    <p className="text-[10px] font-bold">BSC (MLT)</p>
+                                                                    <p className="text-[10px]">Lab Incharge</p>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
+
                                         );
                                     })}
 
@@ -585,8 +596,8 @@ export default function ViewLabReportPage() {
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
+                </div >
+            </div >
             <PrintPageNumbers />
         </>
     );

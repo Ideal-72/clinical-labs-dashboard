@@ -611,9 +611,9 @@ export default function ObservationsPage() {
     return (
         <div className="space-y-6">
             {/* New Design Implementation */}
-            <div className="bg-card shadow-md rounded-md overflow-hidden border border-border">
+            <div className="bg-card shadow-md rounded-md border border-border">
                 {/* Blue Header - Using primary color to match "Add Patient" button */}
-                <div className="bg-primary px-4 py-3 flex justify-between items-center">
+                <div className="bg-primary px-4 py-3 flex justify-between items-center rounded-t-md">
                     <h1 className="text-white font-medium text-lg uppercase flex items-center gap-2">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
