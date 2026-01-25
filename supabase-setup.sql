@@ -64,3 +64,6 @@ ALTER TABLE test_results ADD COLUMN IF NOT EXISTS row_type TEXT DEFAULT 'test';
 
 -- 2024-01-03: Add sid_no column to patients table
 ALTER TABLE patients ADD COLUMN IF NOT EXISTS sid_no TEXT;
+
+-- 2025-01-19: Add referred_by column to patients table for Doctor Auto-fill
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS referred_by TEXT;

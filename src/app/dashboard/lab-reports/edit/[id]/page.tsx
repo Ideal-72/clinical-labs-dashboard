@@ -57,9 +57,9 @@ export default function EditLabReportPage() {
         age: '',
         sex: 'Male',
         referredBy: 'Self',
-        collectedDate: new Date().toISOString().split('T')[0],
-        receivedDate: new Date().toISOString().split('T')[0],
-        reportedDate: new Date().toISOString().split('T')[0],
+        collectedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
+        receivedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
+        reportedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
         comments: '',
     });
 
@@ -716,10 +716,10 @@ export default function EditLabReportPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">
-                                    Collected Date
+                                    Collected Date/Time
                                 </label>
                                 <input
-                                    type="date"
+                                    type="datetime-local"
                                     value={patientDetails.collectedDate}
                                     onChange={(e) =>
                                         setPatientDetails({ ...patientDetails, collectedDate: e.target.value })
@@ -730,10 +730,10 @@ export default function EditLabReportPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">
-                                    Received Date
+                                    Received Date/Time
                                 </label>
                                 <input
-                                    type="date"
+                                    type="datetime-local"
                                     value={patientDetails.receivedDate}
                                     onChange={(e) =>
                                         setPatientDetails({ ...patientDetails, receivedDate: e.target.value })
@@ -744,10 +744,10 @@ export default function EditLabReportPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">
-                                    Reported Date
+                                    Reported Date/Time
                                 </label>
                                 <input
-                                    type="date"
+                                    type="datetime-local"
                                     value={patientDetails.reportedDate}
                                     onChange={(e) =>
                                         setPatientDetails({ ...patientDetails, reportedDate: e.target.value })

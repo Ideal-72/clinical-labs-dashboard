@@ -60,9 +60,9 @@ export default function CreateLabReportPage() {
         referredBy: 'Self',
         referralType: 'self',
         doctorName: '',
-        collectedDate: new Date().toISOString().split('T')[0],
-        receivedDate: new Date().toISOString().split('T')[0],
-        reportedDate: new Date().toISOString().split('T')[0],
+        collectedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
+        receivedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
+        reportedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
         includeHeader: true,
         includeNotes: true,
         comments: '',
@@ -192,28 +192,22 @@ export default function CreateLabReportPage() {
     };
 
     const handlePatientSelect = (patient: any) => {
-
+        const isDoctor = patient.referred_by?.startsWith('Dr. ');
         setPatientDetails({
-
             ...patientDetails,
-
-
-
             patientName: patient.name,
-
             patientId: patient.opno,
-
             age: patient.age.toString(),
-
             sex: patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other',
-
+            referredBy: patient.referred_by || 'Self',
+            referralType: isDoctor ? 'doctor' : 'self',
+            doctorName: isDoctor ? patient.referred_by?.replace('Dr. ', '') || '' : ''
         });
 
         // Auto-fetch SID if not present (or always, based on requirement "unique for every patient")
         fetchNextSid();
 
         setShowSuggestions(false);
-
     };
 
 
@@ -763,10 +757,11 @@ export default function CreateLabReportPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">
-                                    Collected Date
+                                    Collected Date/Time
                                 </label>
                                 <input
-                                    type="date"
+                                    type="datetime-local"
+                                    required
                                     value={patientDetails.collectedDate}
                                     onChange={(e) =>
                                         setPatientDetails({ ...patientDetails, collectedDate: e.target.value })
@@ -777,10 +772,11 @@ export default function CreateLabReportPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">
-                                    Received Date
+                                    Received Date/Time
                                 </label>
                                 <input
-                                    type="date"
+                                    type="datetime-local"
+                                    required
                                     value={patientDetails.receivedDate}
                                     onChange={(e) =>
                                         setPatientDetails({ ...patientDetails, receivedDate: e.target.value })
@@ -791,10 +787,11 @@ export default function CreateLabReportPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">
-                                    Reported Date
+                                    Reported Date/Time
                                 </label>
                                 <input
-                                    type="date"
+                                    type="datetime-local"
+                                    required
                                     value={patientDetails.reportedDate}
                                     onChange={(e) =>
                                         setPatientDetails({ ...patientDetails, reportedDate: e.target.value })

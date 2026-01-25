@@ -326,6 +326,26 @@ export const testTemplates: TestTemplates = {
             method: "Slide agglutination",
             clinicalNote: "**INTERPRETATION:** >=1:80 -Significant\n\nWidal agglutination is a serologic technique to aid in diagnosis of typhoid (enteric) fever. The test is based on demonstrating the presence of agglutinin (antibody) in the serum of an infected patient, against the H (flagellar) and O (somatic) antigens of Salmonella typhi, S.paratyphi A, B & C. Antibodies to Salmonella may be detected in patient serum from the second week after onset of infection.\n\nPositive results obtained in the slide test should be confirmed with tube test to establish whether the titers are diagnostically significant TAB vaccinated patients may show a high titer of antibodies to each of the antigens. Similarly, an amnestic response to other vaccines and unrelated fever in case of patients who have prior infection or immunization may give a false result.\n\nAgglutinins usually appear at the end of first week of infection, blood sample taken earlier may give a negative result.\n\nA rising titre is more significant than a single high titer. It is therefore necessary to evaluate two or more serum samples taken in 4-6 days interval after the onset of disease.\n\nWhile the “O” antigen is species specific, the “H” antigen is specific to serotype. Serologic findings are not intended as substitute for culture. An appropriate attempt should be made to recover and identify the etiologic organism through various culture and biochemical tests.\n\nGenerally antibodies titers of more than 1:80 are considered clinically and diagnostically significant. However the significant titer may vary from population to population and needs to be established for each area. It is recommended that the results of the tests should be correlated with clinical findings to arrive at the final diagnosis.\n\n**Suggest to do Typhi Dot IGG / IGM and tube methods for confirmation**"
         },
+        "RA-FACTOR": {
+            units: "IU/mL",
+            referenceRange: "<14",
+            specimen: "Serum",
+            method: "Sandwich Immunodetection"
+        },
+        "ASO-AntistreptolysinO": {
+            units: "IU/mL",
+            referenceRange: "Lessthan200",
+            specimen: "Serum",
+            method: "Sandwich Immunodetection",
+            clinicalNote: "ASO antibodies are produced about a week to a month after an initial streptococcal infection. The amount of ASO antibody peaks at about 3 to 5 weeks after the illness and then tapers off but may remain detectable for several months after the strep infection has resolved. Over 80% of patients with acute rheumatic fever and 95% of patients with acute glomerulonephritis due to streptococci have elevated ASO. In some cases of streptococcal infections, particularly skin infections, there may be no observable increase in the ASO. An elevated titer of antibody (positive ASO) or an ASO titer that is rising indicates recent strep infection. ASO titers that are initially high and then decline suggest that an infection has occurred and may be resolving. **Both clinical and laboratory findings should be correlated in reaching a diagnosis. In very rare cases, gammopathy, in particular type IgM (Waldenström’s macroglobulinemia), may cause unreliable results.**"
+        },
+        "CRP": {
+            units: "mg/L",
+            referenceRange: "Less than 5",
+            specimen: "Serum",
+            method: "Sandwich Immunodetection",
+            clinicalNote: "The CRP response frequently precedes clinical symptoms such as infections, inflammatory diseases and malignant neoplasms. Alterations are detectable within 6 to 8 hours and the peak value is reached within 24 to 48 hours. Levels of up to thousandfold the normal value are associated with severe stimuli such as myocardial infarction, major trauma, surgery, or malignant neoplasms. CRP levels can be elevated in the later stages of pregnancy, birth control pills or hormone replacement therapy (i.e., estrogen) and obesity. Significantly decreased CRP values may be obtained from samples taken from patients who have been treated with carboxypenicillins. In very rare cases, gammopathy, in particular type IgM (Waldenström’s macroglobulinemia) and patients who have been treated or received monoclonal mouse antibodies, may cause unreliable results. **CRP determination may replace the classical determination of Erythrocytes Sedimentation Rate (ESR), due to its prompt response to changes in disease activity (CRP increases sooner and then decreases more rapidly than the ESR) and its good correlation to ESR.**"
+        },
         "Dengue Panel": {
             type: 'group_header',
             units: "",
@@ -354,6 +374,13 @@ export const testTemplates: TestTemplates = {
             method: "Immunochromatographic",
             clinicalNote: "Dengue IgM card qualitative detects IgM antibodies to dengue antigen in serum. The diagnosis must be interpreted with clinical signs and symptoms of the patient. Primary Dengue infection is characterized by the presence of significant or rising IgM levels after 3-5 days on the onset of infection and persists for 3-5 months. Secondary infection is characterized by elevation of specific IgG 1-2 days after the onset of infection and in majority of the cases is accompanied with elevation of IgM. In early and some secondary infections, detectable levels of IgM maybe low. In few cases, patients may not produce detectable levels of antibody within the first 7-10 days after infection. Where symptoms persist, it is recommended to re-test seven days after the first specimen.\n\n**Considering the similarity in some of the symptoms between dengue and COVID-19, as well as possible cross-reactivity between dengue virus and SARS-CoV-2, which can lead to false positive dengue serology among COVID-19 patients and vice versa, requesting health practitioners in dengue endemic areas to diagnose both dengue and COVID-19 to avoid misdiagnosis.**\n\n**SUGGEST TO DO QUANTITATIVE METHODS FOR CONFIRMATION**"
         },
+        "HIV Panel": {
+            type: 'group_header',
+            units: "",
+            referenceRange: "",
+            specimen: "",
+            method: ""
+        },
         "HIV - I & II": {
             units: "",
             referenceRange: "Qualitative Detection",
@@ -361,25 +388,14 @@ export const testTemplates: TestTemplates = {
             method: "TRI-DOT",
             clinicalNote: "Human Immunodeficiency Virus (HIV) comprises two types: HIV-1, the most widespread globally, and HIV-2, which is less common and primarily found in Western Africa. The HIV-1 type typically tests positive more quickly, while HIV-2 may not show positive results as readily. The TRIDOT HIV test is a rapid, visual, and precise immunoassay designed to differentiate between HIV-1 and HIV-2 antibodies (IgM, IgG, and IgA) in human serum or plasma. This screening test uses HIV-1 and HIV-2 antigens immobilized on an immunofiltration membrane to detect antibodies. The test works by having the patient's sample pass through the membrane, where HIV antibodies bind to the antigens and produce distinct pinkish-purple dots, providing a visual result against a white background.\n\n**Note: This is only a screening test. All reactive samples should be confirmed by (CLIA/ELISA, CMIA & PCR) confirmatory tests. A negative result does not exclude the possibility of exposure or infection.**"
         },
-        "RA-FACTOR": {
-            units: "IU/mL",
-            referenceRange: "<14",
-            specimen: "Serum",
-            method: "Sandwich Immunodetection"
-        },
-        "ASO-AntistreptolysinO": {
-            units: "IU/mL",
-            referenceRange: "Lessthan200",
-            specimen: "Serum",
-            method: "Sandwich Immunodetection",
-            clinicalNote: "ASO antibodies are produced about a week to a month after an initial streptococcal infection. The amount of ASO antibody peaks at about 3 to 5 weeks after the illness and then tapers off but may remain detectable for several months after the strep infection has resolved. Over 80% of patients with acute rheumatic fever and 95% of patients with acute glomerulonephritis due to streptococci have elevated ASO. In some cases of streptococcal infections, particularly skin infections, there may be no observable increase in the ASO. An elevated titer of antibody (positive ASO) or an ASO titer that is rising indicates recent strep infection. ASO titers that are initially high and then decline suggest that an infection has occurred and may be resolving. **Both clinical and laboratory findings should be correlated in reaching a diagnosis. In very rare cases, gammopathy, in particular type IgM (Waldenström’s macroglobulinemia), may cause unreliable results.**"
-        },
-        "CRP": {
-            units: "mg/L",
-            referenceRange: "Less than 5",
-            specimen: "Serum",
-            method: "Sandwich Immunodetection",
-            clinicalNote: "The CRP response frequently precedes clinical symptoms such as infections, inflammatory diseases and malignant neoplasms. Alterations are detectable within 6 to 8 hours and the peak value is reached within 24 to 48 hours. Levels of up to thousandfold the normal value are associated with severe stimuli such as myocardial infarction, major trauma, surgery, or malignant neoplasms. CRP levels can be elevated in the later stages of pregnancy, birth control pills or hormone replacement therapy (i.e., estrogen) and obesity. Significantly decreased CRP values may be obtained from samples taken from patients who have been treated with carboxypenicillins. In very rare cases, gammopathy, in particular type IgM (Waldenström’s macroglobulinemia) and patients who have been treated or received monoclonal mouse antibodies, may cause unreliable results. **CRP determination may replace the classical determination of Erythrocytes Sedimentation Rate (ESR), due to its prompt response to changes in disease activity (CRP increases sooner and then decreases more rapidly than the ESR) and its good correlation to ESR.**"
+
+
+        "Hepatitis Panel": {
+            type: 'group_header',
+            units: "",
+            referenceRange: "",
+            specimen: "",
+            method: ""
         },
         "HBS AG": {
             units: "",
@@ -396,8 +412,7 @@ export const testTemplates: TestTemplates = {
             clinicalNote: "Introduction\nHepatitis C Virus (HCV) is now recognized as a major agent of chronic hepatitis transfusion acquired non-A, non-B hepatitis and liver disease throughout the world. HCV is a positive sense single stranded RNA virus. The major immunoreactive antigens of its proteins have been reported as core, NS3, NS4 and NS5 regions of HCV genome, which are known as highly immunodominant regions.\nHCV infection frequently progresses to chronic liver disease. On the basis of Phylogenetic analysis, HCV has been grouped into six major genotypes each of which contains one or more subtypes. The distribution of HCV genotypes varies in different geographical areas.\n\n**Note: This is only a screening test. All reactive samples should be confirmed by (CLIA/ELISA, CMIA & PCR) confirmatory tests. A negative result does not exclude the possibility of exposure or infection**"
 
         },
-        "TB LGM": { units: "", referenceRange: "Qualitative Detection", specimen: "Serum", method: "Immunochromatography" },
-        "LEPTOSPIRA": { units: "", referenceRange: "Qualitative Detection", specimen: "Serum", method: "Immunochromatography" },
+
         "VDRL": {
             type: 'group_header',
             units: "",

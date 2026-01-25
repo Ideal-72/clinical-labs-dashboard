@@ -19,6 +19,7 @@ interface Patient {
   created_at?: string;
   lab_reports?: { sid_no: string }[];
   sid_no?: string;
+  referred_by?: string;
 }
 
 // IST DateTime helper function
@@ -51,9 +52,15 @@ export default function PatientsPage() {
     name: '',
     age: '',
     gender: 'M' as 'M' | 'F' | 'O',
-    address: ''
+    address: '',
+    referralType: 'self',
+    doctorName: ''
   });
   const [loading, setLoading] = useState(false);
+
+  // Doctor suggestions state
+  const [doctorSuggestions, setDoctorSuggestions] = useState<string[]>([]);
+  const [showDoctorSuggestions, setShowDoctorSuggestions] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top?: string, bottom?: string, left?: string, right?: string }>({});
 
@@ -76,7 +83,20 @@ export default function PatientsPage() {
 
   useEffect(() => {
     fetchPatients();
+    fetchDoctors();
   }, [doctorId]);
+
+  const fetchDoctors = async () => {
+    try {
+      const res = await fetch('/api/doctors');
+      const data = await res.json();
+      if (data.doctors) {
+        setDoctorSuggestions(data.doctors);
+      }
+    } catch (e) {
+      console.error("Failed to fetch doctors", e);
+    }
+  };
 
   const fetchPatients = async () => {
     if (!doctorId) return;
@@ -237,11 +257,16 @@ export default function PatientsPage() {
       const url = '/api/patients';
       const method = editingPatient ? 'PUT' : 'POST';
       const body = editingPatient
-        ? { id: editingPatient.id, ...formData }
+        ? {
+          id: editingPatient.id,
+          ...formData,
+          referred_by: formData.referralType === 'self' ? 'Self' : (formData.doctorName ? `Dr. ${formData.doctorName}` : 'Self')
+        }
         : {
           ...formData,
           opno: formData.opno || generateNextOpno(),
-          sid_no: formData.sid_no || generateNextSid()
+          sid_no: formData.sid_no || generateNextSid(),
+          referred_by: formData.referralType === 'self' ? 'Self' : (formData.doctorName ? `Dr. ${formData.doctorName}` : 'Self')
         };
 
       const response = await fetch(url, {
@@ -255,9 +280,10 @@ export default function PatientsPage() {
 
       if (response.ok) {
         await fetchPatients();
+        fetchDoctors(); // Refresh doctor list to include newly added doctor
         setShowModal(false);
         setEditingPatient(null);
-        setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '' });
+        setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
       } else {
         const error = await response.json();
         alert('Error: ' + error.error);
@@ -272,13 +298,16 @@ export default function PatientsPage() {
 
   const handleEdit = (patient: Patient) => {
     setEditingPatient(patient);
+    const isDoctor = patient.referred_by?.startsWith('Dr. ');
     setFormData({
       opno: patient.opno,
       sid_no: patient.sid_no || '',
       name: patient.name,
       age: patient.age.toString(),
       gender: patient.gender,
-      address: patient.address
+      address: patient.address || '',
+      referralType: isDoctor ? 'doctor' : 'self',
+      doctorName: isDoctor ? (patient.referred_by?.replace('Dr. ', '') || '') : ''
     });
     setShowModal(true);
     setDropdownOpen(null);
@@ -1087,6 +1116,73 @@ export default function PatientsPage() {
                   <p className="text-xs text-gray-500 mt-1">{formData.address.length}/100 characters</p>
                 </div>
 
+                {/* Referred By Section */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Referred By</label>
+                  <div className="flex items-center space-x-4 mb-2">
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        value="self"
+                        checked={formData.referralType === 'self'}
+                        onChange={(e) => setFormData({ ...formData, referralType: 'self' })}
+                        className="form-radio text-blue-600"
+                      />
+                      <span className="ml-2 text-gray-900">Self</span>
+                    </label>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        value="doctor"
+                        checked={formData.referralType === 'doctor'}
+                        onChange={(e) => setFormData({ ...formData, referralType: 'doctor' })}
+                        className="form-radio text-blue-600"
+                      />
+                      <span className="ml-2 text-gray-900">Doctor</span>
+                    </label>
+                  </div>
+
+                  {formData.referralType === 'doctor' && (
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                        Dr.
+                      </span>
+                      <input
+                        type="text"
+                        value={formData.doctorName || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData({ ...formData, doctorName: val });
+                          setShowDoctorSuggestions(true);
+                        }}
+                        onFocus={() => setShowDoctorSuggestions(true)}
+                        placeholder="Smith"
+                        className="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      />
+                      {showDoctorSuggestions && formData.doctorName && (
+                        <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto mt-1">
+                          {doctorSuggestions
+                            .filter(doc => doc.toLowerCase().includes(formData.doctorName.toLowerCase()) && doc !== formData.doctorName)
+                            .map((doc, idx) => (
+                              <div
+                                key={idx}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-gray-900"
+                                onClick={() => {
+                                  // Strip "Dr." prefix (case insensitive) to avoid "Dr. Dr." logic
+                                  const nameOnly = doc.replace(/^Dr\.?\s*/i, '');
+                                  setFormData({ ...formData, doctorName: nameOnly });
+                                  setShowDoctorSuggestions(false);
+                                }}
+                              >
+                                {doc}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex justify-end space-x-3 pt-6">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -1096,7 +1192,7 @@ export default function PatientsPage() {
                       setShowModal(false);
                       setEditingPatient(null);
                       setEditingPatient(null);
-                      setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '' });
+                      setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
                     }}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                   >

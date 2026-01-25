@@ -46,8 +46,13 @@ interface Report {
     comments?: string;
 }
 
-const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string) => {
+const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string, patientAge?: number) => {
     if (!resultStr || !rangeStr) return { isAbnormal: false, direction: 'normal' };
+
+    // Ignore Widal / Serology Dilution results (e.g. "POSITIVE 1:80 DILUTION")
+    if (resultStr.toUpperCase().includes('DILUTION') || resultStr.includes('1:')) {
+        return { isAbnormal: false, direction: 'normal' };
+    }
 
     // Extract numeric value from result
     const resultMatch = resultStr.match(/(\d+(\.\d+)?)/);
@@ -56,38 +61,203 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string)
 
     let cleanRange = rangeStr.trim();
 
-    // Handle Gender Specific Ranges (e.g., "M: 13.5-17.5, F: 12-15.5")
-    if (patientSex && (cleanRange.includes('M:') || cleanRange.includes('F:'))) {
+    // Handle Gender Specific Ranges (supports "M:", "F:", "Male:", "Female:")
+    // Check if range contains gender indicators
+    if (patientSex && (
+        /M(ale)?\s*:/i.test(cleanRange) ||
+        /F(emale)?\s*:/i.test(cleanRange)
+    )) {
         const isMale = patientSex.toLowerCase().startsWith('m');
-        const genderKey = isMale ? 'M:' : 'F:';
+        // Regex to match "M:", "Male:", "F:", "Female:" (case insensitive)
+        const maleRegex = /M(ale)?\s*:/i;
+        const femaleRegex = /F(emale)?\s*:/i;
 
-        // Try to find the specific part
-        const parts = cleanRange.split(/[,;]/); // Split by comma or semicolon
-        const genderPart = parts.find(p => p.trim().toUpperCase().startsWith(genderKey));
+        // Split by comma, semicolon, OR newline
+        const parts = cleanRange.split(/[,;\n]/);
+
+        let genderPart;
+        if (isMale) {
+            genderPart = parts.find(p => maleRegex.test(p));
+        } else {
+            genderPart = parts.find(p => femaleRegex.test(p));
+        }
 
         if (genderPart) {
-            // Extract the range part (remove "M:" or "F:")
-            cleanRange = genderPart.replace(new RegExp(genderKey, 'i'), '').trim();
+            // Extract the range part (remove the gender prefix)
+            cleanRange = genderPart.replace(isMale ? maleRegex : femaleRegex, '').trim();
         }
     }
 
-    // Handle "min - max" format (e.g., "10.0 - 20.0")
-    if (cleanRange.includes('-')) {
-        const parts = cleanRange.split('-').map(p => parseFloat(p.trim()));
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            if (result < parts[0]) return { isAbnormal: true, direction: 'low' };
-            if (result > parts[1]) return { isAbnormal: true, direction: 'high' };
+    // Clean units from range (remove non-arithmetic chars except <, >, -, .)
+    // This helps with " < 15 mm/hr " -> "< 15"
+    // But be careful not to break "10-20"
+
+    // Handle Age Specific Ranges
+    if (patientAge !== undefined && patientAge !== null) {
+        const lines = rangeStr.split(/[\n,;]/);
+        for (const line of lines) {
+            // Check for "min - max yrs" or "min - max years" pattern
+            const ageMatch = line.match(/(\d+)\s*[-–]\s*(\d+)\s*(?:yrs|years?)/i);
+            if (ageMatch) {
+                const minAge = parseFloat(ageMatch[1]);
+                const maxAge = parseFloat(ageMatch[2]);
+                if (patientAge >= minAge && patientAge <= maxAge) {
+                    // This is the correct line for this patient
+                    // Extract the range values from this line (usually inside parents or just distinct numbers)
+                    // e.g. "4 – 12 yrs (54 – 369)"
+
+                    // Look for numbers NOT associated with the age part
+                    // Helper to remove the age part and look for range
+                    const lineWithoutAge = line.replace(ageMatch[0], '');
+
+                    // Try to find "min - max" in the remaining string
+                    const rangeMatch = lineWithoutAge.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+                    if (rangeMatch) {
+                        const min = parseFloat(rangeMatch[1]);
+                        const max = parseFloat(rangeMatch[2]);
+                        if (result < min) return { isAbnormal: true, direction: 'low' };
+                        if (result > max) return { isAbnormal: true, direction: 'high' };
+                        return { isAbnormal: false, direction: 'normal' }; // matched age, verified normal
+                    }
+                }
+            }
         }
     }
-    // Handle "< max" format (e.g., "< 5.0")
-    else if (cleanRange.startsWith('<')) {
-        const max = parseFloat(cleanRange.replace('<', '').trim());
-        if (!isNaN(max) && result >= max) return { isAbnormal: true, direction: 'high' };
+
+    // Handle complex text-based ranges (e.g. Mantoux: "Lessthan 5 NEGATIVE", "6 - 14 POSITIVE")
+    if (rangeStr.toUpperCase().includes('POSITIVE') || rangeStr.toUpperCase().includes('NEGATIVE')) {
+        const lines = rangeStr.split(/[\n,;]/);
+        // We only care if it falls into a POSITIVE bucket
+        for (const line of lines) {
+            const upperLine = line.toUpperCase().trim();
+            if (upperLine.includes('POSITIVE') && !upperLine.includes('NEGATIVE')) {
+                // Check for "min - max" format in this line
+                const rangeMatch = line.match(/(\d+)\s*-\s*(\d+)/);
+                if (rangeMatch) {
+                    const min = parseFloat(rangeMatch[1]);
+                    const max = parseFloat(rangeMatch[2]);
+                    if (result >= min && result <= max) return { isAbnormal: true, direction: 'high' };
+                }
+
+                // Check for "min +" format (15 + STRONGLY POSITIVE)
+                const plusMatch = line.match(/(\d+)\s*\+/);
+                if (plusMatch) {
+                    const min = parseFloat(plusMatch[1]);
+                    if (result >= min) return { isAbnormal: true, direction: 'high' };
+                }
+
+                // Check for "> min" or "More than min"
+                if (upperLine.startsWith('>') || upperLine.includes('MORE ')) {
+                    const minMatch = line.match(/(\d+(\.\d+)?)/);
+                    if (minMatch) {
+                        const min = parseFloat(minMatch[0]);
+                        if (result > min) return { isAbnormal: true, direction: 'high' };
+                    }
+                }
+            }
+        }
+        // If it didn't match a positive line, it might be in a negative line or implied normal.
+        // We don't mark NEGATIVE as abnormal usually (unless specifically asked).
+        // For Mantoux, usually only Positive is highlighted.
+    }
+
+    // Handle Explicit "Low", "High", "Very High" labelled ranges (e.g. Triglycerides)
+    // "Normal: <161\nHigh:161-199\nHypertriclyceridemic:200-499\nVery High : >499"
+    if (/High|Low|Critical|Abnormal/i.test(rangeStr)) {
+        const lines = rangeStr.split(/[\n,]/);
+        for (const line of lines) {
+            const cleanLine = line.trim();
+            // Check for "High" or "Very High" or "Hypertriclyceridemic"
+            if (/High|Hz|Hypertriclyceridemic|Critical|Abnormal/i.test(cleanLine) && !/Normal|Desirable/i.test(cleanLine)) {
+                // It's an abnormal range definition. Check if result falls here.
+
+                // Check "min - max" e.g. "161-199"
+                const rangeMatch = cleanLine.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+                if (rangeMatch) {
+                    const min = parseFloat(rangeMatch[1]);
+                    const max = parseFloat(rangeMatch[2]);
+                    if (result >= min && result <= max) return { isAbnormal: true, direction: 'high' };
+                }
+
+                // Check "> min" e.g. "> 499"
+                if (cleanLine.includes('>') || cleanLine.includes('More than')) {
+                    const minMatch = cleanLine.match(/(\d+(?:\.\d+)?)/);
+                    if (minMatch) {
+                        const min = parseFloat(minMatch[0]);
+                        if (result > min) return { isAbnormal: true, direction: 'high' };
+                    }
+                }
+            }
+
+            // Check for "Low"
+            if (/Low/i.test(cleanLine) && !/Normal|Desirable/i.test(cleanLine)) {
+                // Check "min - max" e.g. "Low: 10-20" unlikely but possible
+                const rangeMatch = cleanLine.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+                if (rangeMatch) {
+                    const min = parseFloat(rangeMatch[1]);
+                    const max = parseFloat(rangeMatch[2]);
+                    if (result >= min && result <= max) return { isAbnormal: true, direction: 'low' };
+                }
+
+                // Check "< max" e.g. "Low: < 40"
+                if (cleanLine.includes('<') || cleanLine.includes('Less than')) {
+                    const maxMatch = cleanLine.match(/(\d+(?:\.\d+)?)/);
+                    if (maxMatch) {
+                        const max = parseFloat(maxMatch[0]);
+                        if (result < max) return { isAbnormal: true, direction: 'low' };
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle "min - max" format (e.g., "10.0 - 20.0" or "Healthy Adult : 70 - 110")
+
+    // Handle "< max" format (e.g., "< 5.0") or "Lessthan35"
+    if (cleanRange.startsWith('<') || cleanRange.replace(/\s/g, '').toUpperCase().includes('LESSTHAN')) {
+        // Handle "Lessthan35" or "Less than 35"
+        const lessThanMatch = cleanRange.match(/(?:<|LESS\s*THAN)\s*(\d+(\.\d+)?)/i);
+        if (lessThanMatch) {
+            const max = parseFloat(lessThanMatch[1]);
+            if (!isNaN(max) && result >= max) return { isAbnormal: true, direction: 'high' }; // Generally if range is < max, then >= max is high
+        }
+        // Fallback for simple startsWith('<') if regex didn't catch it (though regex covers it)
+        else if (cleanRange.startsWith('<')) {
+            const maxStr = cleanRange.replace('<', '').trim();
+            const maxMatch = maxStr.match(/(\d+(\.\d+)?)/);
+            if (maxMatch) {
+                const max = parseFloat(maxMatch[0]);
+                if (!isNaN(max) && result >= max) return { isAbnormal: true, direction: 'high' };
+            }
+        }
     }
     // Handle "> min" format (e.g., "> 10.0")
     else if (cleanRange.startsWith('>')) {
-        const min = parseFloat(cleanRange.replace('>', '').trim());
-        if (!isNaN(min) && result <= min) return { isAbnormal: true, direction: 'low' };
+        const minStr = cleanRange.replace('>', '').trim();
+        const minMatch = minStr.match(/(\d+(\.\d+)?)/);
+        if (minMatch) {
+            const min = parseFloat(minMatch[0]);
+            if (!isNaN(min) && result <= min) return { isAbnormal: true, direction: 'low' };
+        }
+    }
+
+    // Handle "min - max" format (e.g., "10.0 - 20.0" or "Healthy Adult : 70 - 110")
+    else if (cleanRange.includes('-') && !cleanRange.toUpperCase().includes('YEARS') && !cleanRange.toUpperCase().includes('YRS')) {
+        const parts = cleanRange.split('-').map(p => parseFloat(p.trim()));
+        // If simple parsing works (both are numbers)
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+            if (result < parts[0]) return { isAbnormal: true, direction: 'low' };
+            if (result > parts[1]) return { isAbnormal: true, direction: 'high' };
+        } else {
+            // Fallback: Try to extract numbers using regex if simple split failed (e.g. "Adult : 70 - 110")
+            const rangeMatch = cleanRange.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
+            if (rangeMatch) {
+                const min = parseFloat(rangeMatch[1]);
+                const max = parseFloat(rangeMatch[2]);
+                if (result < min) return { isAbnormal: true, direction: 'low' };
+                if (result > max) return { isAbnormal: true, direction: 'high' };
+            }
+        }
     }
 
     return { isAbnormal: false, direction: 'normal' };
@@ -164,7 +334,7 @@ export default function ViewLabReportPage() {
 
     const [report, setReport] = useState<Report | null>(null);
     const [loading, setLoading] = useState(true);
-    const [showHeader, setShowHeader] = useState(true);
+    const [showHeader, setShowHeader] = useState(false);
     const [showNotes, setShowNotes] = useState(true);
     const [isSharing, setIsSharing] = useState(false);
 
@@ -180,11 +350,12 @@ export default function ViewLabReportPage() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to fetch report');
+                console.error('Fetch error details:', data);
+                throw new Error(data.details || data.error || 'Failed to fetch report');
             }
 
             setReport(data.report);
-            setShowHeader(data.report.include_header ?? true);
+            setShowHeader(data.report.include_header ?? false);
             setShowNotes(data.report.include_notes ?? true);
         } catch (error: any) {
             console.error('Error fetching report:', error);
@@ -294,7 +465,7 @@ export default function ViewLabReportPage() {
                 );
             }
 
-            const analysis = analyzeResult(test.result, test.reference_range, report.sex);
+            const analysis = analyzeResult(test.result, test.reference_range, report.sex, report.age);
             const template = getTestTemplate(sectionName, test.test_name);
 
             // Helper to check if a header already exists as a physical row
@@ -336,6 +507,8 @@ export default function ViewLabReportPage() {
                 !diabeticScreeningTests.includes(prevTest?.test_name || '') &&
                 !hasGroupHeader('DIABETIC SCREENING');
 
+            const showPregnancyHeader = test.test_name === 'PREGNANCY CARD TEST' && !hasGroupHeader('PREGNANCY TEST');
+
             const hba1cTests = ['Glycosylated Haemoglobin (HbA1c)', 'Estimated Average Glucose (eAG)'];
             const showHbA1cHeader = hba1cTests.includes(test.test_name) &&
                 !hba1cTests.includes(prevTest?.test_name || '') &&
@@ -353,6 +526,7 @@ export default function ViewLabReportPage() {
                 <React.Fragment key={test.id}>
                     {showUrineHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Urine complete analysis</td></tr>}
                     {showMantouxHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Tuberculin skin (Mantoux) Test</td></tr>}
+                    {showPregnancyHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">PREGNANCY TEST</td></tr>}
                     {showBoneHealthHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Bone Health</td></tr>}
                     {showLipidProfileHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">LIPID PROFILE</td></tr>}
                     {showRFTHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">RENAL FUNCTION TEST</td></tr>}
@@ -582,18 +756,20 @@ export default function ViewLabReportPage() {
                                                             </tbody>
                                                         </table>
 
-                                                        {/* Signature inside same container */}
-                                                        <div className="flex justify-between items-end mt-2 mb-2 px-2">
-                                                            <div className="text-xs"><div className="border-t border-gray-400 pt-1 w-32"><span className="text-[10px] text-black font-bold">Verified by</span></div></div>
-                                                            <div className="text-xs flex flex-col items-center">
-                                                                <img src="/signature-lalitha.jpg" alt="Signature" className="h-12 mb-[-5px] object-contain" />
-                                                                <div className="border-t border-gray-400 pt-1 w-32 text-center text-black">
-                                                                    <p className="font-bold text-xs">K.LALITHA</p>
-                                                                    <p className="text-[10px] font-bold">BSC (MLT)</p>
-                                                                    <p className="text-[10px]">Lab Incharge</p>
+                                                        {/* Signature inside same container - Only show if P-LCR is NOT the last test (if it is, it handles its own signature) */}
+                                                        {!section.tests[section.tests.length - 1]?.test_name.includes('P-LCR') && (
+                                                            <div className="flex justify-between items-end mt-2 mb-2 px-2">
+                                                                <div className="text-xs"><div className="border-t border-gray-400 pt-1 w-32"><span className="text-[10px] text-black font-bold">Verified by</span></div></div>
+                                                                <div className="text-xs flex flex-col items-center">
+                                                                    <img src="/signature-lalitha.jpg" alt="Signature" className="h-12 mb-[-5px] object-contain" />
+                                                                    <div className="border-t border-gray-400 pt-1 w-32 text-center text-black">
+                                                                        <p className="font-bold text-xs">K.LALITHA</p>
+                                                                        <p className="text-[10px] font-bold">BSC (MLT)</p>
+                                                                        <p className="text-[10px]">Lab Incharge</p>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

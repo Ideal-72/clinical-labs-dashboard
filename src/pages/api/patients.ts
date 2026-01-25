@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     case 'GET':
       const { data: patients, error: fetchError } = await supabase
         .from('patients')
-        .select('id, opno, sid_no, name, age, gender, address, created_at')
+        .select('id, opno, sid_no, name, age, gender, address, referred_by, created_at')
         .eq('doctor_id', doctorId)
         .order('created_at', { ascending: false });
 
@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(patients || []);
 
     case 'POST':
-      const { opno, sid_no, name, age, gender, address } = req.body;
+      const { opno, sid_no, name, age, gender, address, referred_by } = req.body;
 
       // Generate next OPNO if not provided
       let finalOpno = opno;
@@ -50,9 +50,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           name: name.substring(0, 100),
           age: parseInt(age),
           gender,
-          address: address ? address.substring(0, 100) : ''
+          address: address ? address.substring(0, 100) : '',
+          referred_by: referred_by || ''
         }])
-        .select('id, opno, sid_no, name, age, gender, address, created_at')
+        .select('id, opno, sid_no, name, age, gender, address, referred_by, created_at')
         .single();
 
       if (insertError) {
@@ -62,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(201).json(newPatient);
 
     case 'PUT':
-      const { id, opno: updateOpno, sid_no: updateSid, name: updateName, age: updateAge, gender: updateGender, address: updateAddress } = req.body;
+      const { id, opno: updateOpno, sid_no: updateSid, name: updateName, age: updateAge, gender: updateGender, address: updateAddress, referred_by: updateReferredBy } = req.body;
       const { data: updatedPatient, error: updateError } = await supabase
         .from('patients')
         .update({
@@ -71,11 +72,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           name: updateName.substring(0, 100),
           age: parseInt(updateAge),
           gender: updateGender,
-          address: updateAddress ? updateAddress.substring(0, 100) : ''
+          address: updateAddress ? updateAddress.substring(0, 100) : '',
+          referred_by: updateReferredBy || ''
         })
         .eq('id', id)
         .eq('doctor_id', doctorId)
-        .select('id, opno, sid_no, name, age, gender, address, created_at')
+        .select('id, opno, sid_no, name, age, gender, address, referred_by, created_at')
         .single();
 
       if (updateError) {
