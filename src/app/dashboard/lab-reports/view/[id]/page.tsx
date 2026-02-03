@@ -461,7 +461,14 @@ export default function ViewLabReportPage() {
                     // Clean result: Remove '%' and extra spaces to make it look like a specific decimal
                     let displayResult = test.result;
                     if (displayResult) {
+                        // Remove % first
                         displayResult = displayResult.replace(/%/g, '').trim();
+
+                        // If the result looks like a number with spaces (e.g. "1 0 . 8"), strip all spaces
+                        // We check if it only contains digits, dots, and spaces
+                        if (/^[\d\.\s]+$/.test(displayResult)) {
+                            displayResult = displayResult.replace(/\s/g, '');
+                        }
                     }
 
                     // Row Type Note
