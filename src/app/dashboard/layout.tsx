@@ -13,9 +13,7 @@ const navigation = [
 ];
 
 const settingsNavigation = [
-  { name: 'Test Groups', href: '/dashboard/settings/test-groups' },
-  { name: 'Lab Tests', href: '/dashboard/settings/lab-tests' },
-  { name: 'Report Groups', href: '/dashboard/settings/report-groups' },
+  { name: 'Lab Configuration', href: '/dashboard/settings/lab-configuration' },
   { name: 'System', href: '/dashboard/settings/system' },
 ];
 

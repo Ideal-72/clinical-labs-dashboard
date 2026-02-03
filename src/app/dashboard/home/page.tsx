@@ -274,7 +274,7 @@ export default function HomePage() {
             description: 'Manage test types',
             icon: '⚙️',
             color: 'bg-orange-600 hover:bg-orange-700',
-            action: () => router.push('/dashboard/settings/lab-tests')
+            action: () => router.push('/dashboard/settings/lab-configuration?tab=lab-tests')
         },
         {
             name: 'Export Data',
