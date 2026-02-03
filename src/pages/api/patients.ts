@@ -11,11 +11,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   switch (method) {
     case 'GET':
-      const { data: patients, error: fetchError } = await supabase
+      const { sid } = req.query;
+      let query = supabase
         .from('patients')
         .select('id, opno, sid_no, name, age, gender, address, referred_by, created_at')
-        .eq('doctor_id', doctorId)
-        .order('created_at', { ascending: false });
+        .eq('doctor_id', doctorId);
+
+      if (sid && typeof sid === 'string') {
+        query = query.eq('sid_no', sid);
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
+
+      const { data: patients, error: fetchError } = await query;
 
       if (fetchError) {
         return res.status(500).json({ error: fetchError.message });

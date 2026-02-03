@@ -263,6 +263,21 @@ export default function CreateLabReportPage() {
                                     onChange={(e) =>
                                         setPatientDetails({ ...patientDetails, sidNo: e.target.value })
                                     }
+                                    onBlur={async () => {
+                                        if (patientDetails.sidNo) {
+                                            try {
+                                                const response = await fetch(`/api/patients?sid=${patientDetails.sidNo}`, {
+                                                    headers: { authorization: doctorId?.toString() || '' }
+                                                });
+                                                const data = await response.json();
+                                                if (Array.isArray(data) && data.length > 0) {
+                                                    handlePatientSelect(data[0]);
+                                                }
+                                            } catch (error) {
+                                                console.error('Error fetching patient by SID:', error);
+                                            }
+                                        }
+                                    }}
                                     className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
                                     placeholder="SID123..."
                                 />
