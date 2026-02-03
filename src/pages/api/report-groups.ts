@@ -20,24 +20,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (fetchError) {
         return res.status(500).json({ error: fetchError.message });
       }
-      
+
       // Transform data to match frontend interface
       const transformedData = reportGroups.map(group => ({
         id: group.id,
         name: group.name,
-        testGroups: group.test_groups || []
+        testGroups: group.test_groups || ''
       }));
-      
+
       return res.status(200).json(transformedData);
 
     case 'POST':
       const { name, testGroups } = req.body;
       const { data: newReportGroup, error: insertError } = await supabase
         .from('report_groups')
-        .insert([{ 
-          doctor_id: doctorId, 
-          name, 
-          test_groups: testGroups || []
+        .insert([{
+          doctor_id: doctorId,
+          name,
+          test_groups: testGroups || ''
         }])
         .select('id, name, test_groups')
         .single();
@@ -45,22 +45,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (insertError) {
         return res.status(500).json({ error: insertError.message });
       }
-      
+
       const transformedNewGroup = {
         id: newReportGroup.id,
         name: newReportGroup.name,
-        testGroups: newReportGroup.test_groups || []
+        testGroups: newReportGroup.test_groups || ''
       };
-      
+
       return res.status(201).json(transformedNewGroup);
 
     case 'PUT':
       const { id, name: updateName, testGroups: updateTestGroups } = req.body;
       const { data: updatedReportGroup, error: updateError } = await supabase
         .from('report_groups')
-        .update({ 
-          name: updateName, 
-          test_groups: updateTestGroups || []
+        .update({
+          name: updateName,
+          test_groups: updateTestGroups || ''
         })
         .eq('id', id)
         .eq('doctor_id', doctorId)
@@ -70,13 +70,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (updateError) {
         return res.status(500).json({ error: updateError.message });
       }
-      
+
       const transformedUpdatedGroup = {
         id: updatedReportGroup.id,
         name: updatedReportGroup.name,
-        testGroups: updatedReportGroup.test_groups || []
+        testGroups: updatedReportGroup.test_groups || ''
       };
-      
+
       return res.status(200).json(transformedUpdatedGroup);
 
     case 'DELETE':

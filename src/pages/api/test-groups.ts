@@ -20,25 +20,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (fetchError) {
         return res.status(500).json({ error: fetchError.message });
       }
-      
+
       // Transform data to match frontend interface
       const transformedData = testGroups.map(group => ({
         id: group.id,
         name: group.name,
-        methodUsed: group.method_used || '',
+        method: group.method_used || '',
         specimen: group.specimen || ''
       }));
-      
+
       return res.status(200).json(transformedData);
 
     case 'POST':
-      const { name, methodUsed, specimen } = req.body;
+      const { name, method, specimen } = req.body;
       const { data: newTestGroup, error: insertError } = await supabase
         .from('test_groups')
-        .insert([{ 
-          doctor_id: doctorId, 
-          name, 
-          method_used: methodUsed || '',
+        .insert([{
+          doctor_id: doctorId,
+          name,
+          method_used: method || '',
           specimen: specimen || ''
         }])
         .select('id, name, method_used, specimen')
@@ -47,22 +47,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (insertError) {
         return res.status(500).json({ error: insertError.message });
       }
-      
+
       const transformedNewGroup = {
         id: newTestGroup.id,
         name: newTestGroup.name,
-        methodUsed: newTestGroup.method_used || '',
+        method: newTestGroup.method_used || '',
         specimen: newTestGroup.specimen || ''
       };
-      
+
       return res.status(201).json(transformedNewGroup);
 
     case 'PUT':
-      const { id, name: updateName, methodUsed: updateMethod, specimen: updateSpecimen } = req.body;
+      const { id, name: updateName, method: updateMethod, specimen: updateSpecimen } = req.body;
       const { data: updatedTestGroup, error: updateError } = await supabase
         .from('test_groups')
-        .update({ 
-          name: updateName, 
+        .update({
+          name: updateName,
           method_used: updateMethod || '',
           specimen: updateSpecimen || ''
         })
@@ -74,14 +74,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (updateError) {
         return res.status(500).json({ error: updateError.message });
       }
-      
+
       const transformedUpdatedGroup = {
         id: updatedTestGroup.id,
         name: updatedTestGroup.name,
-        methodUsed: updatedTestGroup.method_used || '',
+        method: updatedTestGroup.method_used || '',
         specimen: updatedTestGroup.specimen || ''
       };
-      
+
       return res.status(200).json(transformedUpdatedGroup);
 
     case 'DELETE':
