@@ -365,6 +365,11 @@ export default function HomePage() {
                             setSearchTerm(e.target.value);
                             handleSearch(e.target.value);
                         }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && searchTerm.trim()) {
+                                router.push(`/dashboard/reports?search=${encodeURIComponent(searchTerm.trim())}`);
+                            }
+                        }}
                         className="w-full pl-10 pr-4 py-3 bg-secondary/50 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -380,7 +385,7 @@ export default function HomePage() {
                                 <div
                                     key={patient.id}
                                     onClick={() => {
-                                        router.push(`/dashboard/observations`);
+                                        router.push(`/dashboard/reports?patientId=${patient.opno}`);
                                         setShowSearchResults(false);
                                         setSearchTerm('');
                                     }}

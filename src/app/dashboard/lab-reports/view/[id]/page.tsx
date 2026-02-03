@@ -335,8 +335,126 @@ export default function ViewLabReportPage() {
     const [report, setReport] = useState<Report | null>(null);
     const [loading, setLoading] = useState(true);
     const [showHeader, setShowHeader] = useState(false);
-    const [showNotes, setShowNotes] = useState(true);
+    const [showNotes, setShowNotes] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+    const handleSavePDF = async () => {
+        if (!reportRef.current || !report) return;
+
+        setIsGeneratingPdf(true);
+        try {
+            // Wait for any images to load / fonts to render
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Clone the report element to modify styles for capture if needed, 
+            // or just capture the existing one. 
+            // We use ReportRef which targets the main report container.
+
+            // 1. Pre-process layout to prevent awkward cuts
+            const element = reportRef.current;
+            const contentWidth = element.scrollWidth;
+
+            // A4 Aspect Ratio is 1 / 1.414 (210 / 297)
+            const a4Ratio = 297 / 210;
+            const singlePageHeight = contentWidth * a4Ratio;
+
+            // Elements we want to keep together or push to next page
+            const notesRows = element.querySelectorAll('.notes-section-row');
+            const footer = element.querySelector('.report-signature-footer');
+
+            const shifts: { element: HTMLElement, originalMargin: string }[] = [];
+
+            const checkAndShift = (el: HTMLElement) => {
+                if (!el) return;
+                const rect = el.getBoundingClientRect();
+                const containerRect = element.getBoundingClientRect();
+
+                // Calculate position relative to the top of the report container
+                const relativeTop = rect.top - containerRect.top;
+
+                // Which page is this starting on?
+                const pageIndex = Math.floor(relativeTop / singlePageHeight);
+                const pageTop = pageIndex * singlePageHeight;
+                const offsetInPage = relativeTop - pageTop;
+
+                // If it starts in the bottom 25% of the page, push it to next page
+                // This ensures "Notes" headers don't accidentally start right at the bottom
+                const threshold = singlePageHeight * 0.75;
+
+                // Also check if the element ITSELF crosses the boundary
+                const relativeBottom = relativeTop + rect.height;
+                const crossesBoundary = Math.floor(relativeBottom / singlePageHeight) > pageIndex;
+
+                if (offsetInPage > threshold || crossesBoundary) {
+                    // Push to next page
+                    const pushAmount = (singlePageHeight - offsetInPage) + 20;
+
+                    shifts.push({ element: el, originalMargin: el.style.marginTop });
+                    el.style.marginTop = `${pushAmount}px`;
+                }
+            };
+
+            // Check notes
+            notesRows.forEach((row) => checkAndShift(row as HTMLElement));
+
+            // Check footer specifically
+            if (footer) checkAndShift(footer as HTMLElement);
+
+            // Wait for layout update
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const canvas = await html2canvas(reportRef.current, {
+                scale: 1.5, // Reduced to 1.5 for smaller file size
+                useCORS: true,
+                logging: false,
+                windowWidth: reportRef.current.scrollWidth,
+                windowHeight: reportRef.current.scrollHeight,
+                backgroundColor: '#ffffff'
+            });
+
+            // Revert styles
+            shifts.forEach(shift => {
+                shift.element.style.marginTop = shift.originalMargin;
+            });
+
+            // 0.8 quality JPEG is much smaller than PNG
+            const imgData = canvas.toDataURL('image/jpeg', 0.8);
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+
+            // Calculate height maintaining aspect ratio
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            let heightLeft = imgHeight;
+            let position = 0;
+            let pageIndex = 0;
+
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                pageIndex++;
+                position = -(pageHeight * pageIndex); // Move image up by one page height per page
+                pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save(`Lab_Report_${report.sid_no || 'Draft'}.pdf`);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('Failed to save PDF. Please try "Print" instead.');
+        } finally {
+            setIsGeneratingPdf(false);
+        }
+    };
 
     useEffect(() => {
         if (reportId) {
@@ -356,7 +474,7 @@ export default function ViewLabReportPage() {
 
             setReport(data.report);
             setShowHeader(data.report.include_header ?? false);
-            setShowNotes(data.report.include_notes ?? true);
+            setShowNotes(data.report.include_notes ?? false);
         } catch (error: any) {
             console.error('Error fetching report:', error);
             alert(error.message || 'Failed to load report');
@@ -367,6 +485,28 @@ export default function ViewLabReportPage() {
 
     const handlePrint = () => {
         window.print();
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/lab-reports/${reportId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete report');
+            }
+
+            // Redirect to reports list
+            router.push('/dashboard/reports');
+        } catch (error: any) {
+            console.error('Error deleting report:', error);
+            alert('Failed to delete report: ' + error.message);
+        }
     };
 
     const handleWhatsAppShare = async () => {
@@ -544,12 +684,16 @@ export default function ViewLabReportPage() {
                             <div className="font-medium text-black">{test.test_name}</div>
                             {test.specimen && <div className="text-xs text-gray-600 mt-0.5">{test.specimen}</div>}
                         </td>
-                        <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity ? 'font-bold' : 'font-medium'}`}>
-                            <div className="flex items-center justify-center h-full relative w-full">
+                        <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity ? 'font-bold' : 'font-normal'}`}>
+                            <div className="flex items-center justify-center h-full relative w-full gap-1">
                                 <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}` : test.result}</span>
                                 {analysis.isAbnormal && (
-                                    <span className="text-xs font-bold absolute right-1 top-1/2 -translate-y-1/2">
-                                        {analysis.direction === 'high' ? '⬆' : '⬇'}
+                                    <span className="text-xs font-bold absolute right-0 top-1/2 -translate-y-1/2 print:static print:translate-y-0 print:ml-1 flex items-center">
+                                        {analysis.direction === 'high' ? (
+                                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-900" aria-hidden="true"><path d="M12 4l-8 8h16l-8-8z" /></svg> // Simple Triangle Up
+                                        ) : (
+                                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-900" aria-hidden="true"><path d="M12 20l8-8H4l8 8z" /></svg> // Simple Triangle Down
+                                        )}
                                     </span>
                                 )}
                             </div>
@@ -591,7 +735,7 @@ export default function ViewLabReportPage() {
                     )}
 
                     {test.notes && (
-                        <tr key={`${test.id}-note`}>
+                        <tr key={`${test.id}-note`} className="notes-section-row">
                             <td colSpan={4} className="border-b border-gray-300 p-1 text-xs text-black italic bg-gray-50/50">
                                 <span className="font-bold not-italic">Note: </span>
                                 <FormattedNote text={test.notes} />
@@ -599,7 +743,7 @@ export default function ViewLabReportPage() {
                         </tr>
                     )}
                     {showNotes && template?.clinicalNote && (
-                        <tr key={`${test.id}-clinical-note`}>
+                        <tr key={`${test.id}-clinical-note`} className="notes-section-row">
                             <td colSpan={4} className="border-b border-gray-300 p-2 text-[10px] text-black bg-gray-100/50">
                                 <span className="font-bold">Note: </span>
                                 <FormattedNote text={template.clinicalNote} />
@@ -641,7 +785,9 @@ export default function ViewLabReportPage() {
                     <button onClick={() => router.push('/dashboard/lab-reports/create')} className="px-4 py-2 bg-background hover:bg-background/80 text-foreground rounded-md transition-colors border border-border">← Back to Form</button>
                     <div className="flex gap-3">
                         <button onClick={() => router.push(`/dashboard/lab-reports/edit/${reportId}`)} className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-md transition-colors font-medium">✏️ Edit Report</button>
-                        <button onClick={handlePrint} className="px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-md transition-colors font-medium">🖨️ Print / PDF</button>
+                        <button onClick={handleDelete} className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-500 rounded-md transition-colors font-medium">🗑️ Delete</button>
+                        <button onClick={handlePrint} className="px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-md transition-colors font-medium">🖨️ Print</button>
+                        <button onClick={handleSavePDF} disabled={isGeneratingPdf} className={`px-4 py-2 rounded-md transition-colors font-medium flex items-center gap-2 ${isGeneratingPdf ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed' : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-500'}`}>{isGeneratingPdf ? '⏳ Saving...' : '💾 Save PDF'}</button>
                         <button onClick={() => setShowHeader(!showHeader)} className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-md transition-colors border border-border">{showHeader ? '👁️ Hide Header' : '🚫 Show Header'}</button>
                         <button onClick={() => setShowNotes(!showNotes)} className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-md transition-colors border border-border">{showNotes ? '📝 Hide Notes' : '📋 Show Notes'}</button>
                         <button onClick={handleWhatsAppShare} disabled={isSharing} className={`px-4 py-2 rounded-md transition-colors font-medium flex items-center gap-2 ${isSharing ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed' : 'bg-green-500/20 hover:bg-green-500/30 text-green-500'}`}>{isSharing ? '⌛ Processing...' : '📱 Share on WhatsApp'}</button>
@@ -660,7 +806,7 @@ export default function ViewLabReportPage() {
                                             <div className="absolute top-0 right-0"><img src="/microscope-icon.png" alt="Microscope" className="h-40 w-auto mix-blend-multiply filter contrast-125" /></div>
                                             <div className="flex justify-center items-center mt-2"><img src="/priya-header-v2.png" alt="Priya Clinical Lab" className="h-[8.5rem] w-auto object-contain" /></div>
                                         </div>
-                                    ) : <div className="mb-6 print:mb-0 w-full" style={{ height: '43mm' }} aria-hidden="true"></div>}
+                                    ) : <div className="mb-6 print:mb-0 w-full" style={{ height: '40mm' }} aria-hidden="true"></div>}
                                 </td>
                             </tr>
                         </thead>

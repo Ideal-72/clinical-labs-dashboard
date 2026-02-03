@@ -39,7 +39,16 @@ export async function GET(request: NextRequest) {
             if (date) {
                 // Check if date string is valid YYYY-MM-DD
                 if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                    query = query.eq('reported_date', date);
+                    // Filter from start of day (00:00:00) to end of day (23:59:59.999)
+                    // Assuming date stored in DB is ISO string or timestamp
+                    const startOfDay = `${date}T00:00:00.000Z`; // Adjust timezone logic if needed, currently assumes UTC storage matching date input
+                    const endOfDay = `${date}T23:59:59.999Z`;
+
+                    // Actually, simpler to just match the day part if using Postgres date casting, 
+                    // but using range is safer for timestamptz.
+                    // We'll broaden the selection to ensure we catch local time shifts if necessary,
+                    // but strict range on the input date string is standard.
+                    query = query.gte('reported_date', `${date}T00:00:00`).lt('reported_date', `${date}T23:59:59.999`);
                 }
             }
 

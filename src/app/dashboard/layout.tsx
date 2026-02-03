@@ -8,9 +8,8 @@ import Link from 'next/link';
 const navigation = [
   { name: 'Home', href: '/dashboard/home', icon: '🏠' },
   { name: 'Patients', href: '/dashboard/patients', icon: '👥' },
-  { name: 'Observations', href: '/dashboard/observations', icon: '📊' },
-  { name: 'Reports by Date', href: '/dashboard/reports', icon: '📅' },
-  { name: 'Lab Reports', href: '/dashboard/lab-reports/create', icon: '📄' },
+  { name: 'Lab Reports', href: '/dashboard/reports', icon: '📅' },
+  { name: 'Generate Report', href: '/dashboard/lab-reports/create', icon: '📄' },
 ];
 
 const settingsNavigation = [
@@ -55,7 +54,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background print:bg-white">
+    <div className="min-h-screen bg-background print:bg-white print:min-h-0 print:h-auto">
       {/* Mobile sidebar */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">

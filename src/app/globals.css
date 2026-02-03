@@ -100,7 +100,6 @@ body {
 }
 
 /* ===== PRINT STYLES FOR LAB REPORTS ===== */
-/* ===== PRINT STYLES FOR LAB REPORTS ===== */
 @media print {
 
   /* 1. Page Setup - Clear everything to hide Browser Header/Footer (URL/Title) */
@@ -127,9 +126,7 @@ body {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
     background-color: white !important;
-    /* Force white background */
     color: black !important;
-    /* Force black text */
   }
 
   body {
@@ -141,11 +138,11 @@ body {
     position: relative !important;
     width: 100% !important;
     height: auto !important;
-    min-height: 295mm !important;
-    /* Maximize A4 usage (297mm - 2mm safety) */
+    min-height: 210mm !important;
+    /* Reduced to 210mm to guarantee single page with header spacer + default margins */
     /* Minimum A4 height */
     margin: 0 !important;
-    padding: 15mm !important;
+    padding: 10mm !important;
     background: white !important;
     border: none !important;
     box-shadow: none !important;
@@ -199,7 +196,6 @@ body {
     /* Safety buffer for footer */
   }
 }
-
 
 
 

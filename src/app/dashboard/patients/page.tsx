@@ -182,19 +182,26 @@ export default function PatientsPage() {
     return (maxSid + 1).toString().padStart(4, '0');
   };
 
-  // Calculate dropdown position based on row position
-  const calculateDropdownPosition = (buttonElement: HTMLElement, rowIndex: number) => {
-    const isNearTop = rowIndex <= 1;
-    const isNearBottom = rowIndex >= paginatedData.length - 2;
+  // Calculate dropdown position based on viewport (Fixed positioning to avoid clipping)
+  const calculateDropdownPosition = (buttonElement: HTMLElement) => {
+    const rect = buttonElement.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const spaceBelow = windowHeight - rect.bottom;
+    const dropdownHeight = 100; // Approximate
+    const dropdownWidth = 128; // w-32
 
     let position: { top?: string, bottom?: string, left?: string, right?: string } = {};
 
-    if (isNearTop) {
-      position = { top: '100%', right: '0px' };
-    } else if (isNearBottom) {
-      position = { bottom: '100%', right: '0px' };
+    // Horizontal position: align right edge of dropdown with right edge of button
+    position.left = `${rect.right - dropdownWidth}px`;
+
+    // Vertical position
+    if (spaceBelow < dropdownHeight && rect.top > spaceBelow) {
+      // Open upwards
+      position.bottom = `${windowHeight - rect.top + 5}px`;
     } else {
-      position = { top: '50%', right: '100%', transform: 'translateY(-50%)' };
+      // Open downwards
+      position.top = `${rect.bottom + 5}px`;
     }
 
     return position;
@@ -204,7 +211,8 @@ export default function PatientsPage() {
     if (dropdownOpen === patientId) {
       setDropdownOpen(null);
     } else {
-      const position = calculateDropdownPosition(buttonElement, rowIndex);
+      const position = calculateDropdownPosition(buttonElement);
+      // @ts-ignore
       setDropdownPosition(position);
       setDropdownOpen(patientId);
     }
@@ -890,7 +898,7 @@ export default function PatientsPage() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ duration: 0.15 }}
-                                className="absolute w-32 bg-white rounded-md shadow-xl border border-gray-200 z-50"
+                                className="fixed w-32 bg-card rounded-md shadow-xl border border-border z-[100]"
                                 style={dropdownPosition}
                               >
                                 <div className="py-1">
@@ -900,7 +908,7 @@ export default function PatientsPage() {
                                       e.preventDefault();
                                       handleEdit(patient);
                                     }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+                                    className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors"
                                   >
                                     Edit
                                   </button>
@@ -910,7 +918,7 @@ export default function PatientsPage() {
                                       e.preventDefault();
                                       handleDelete(patient.id);
                                     }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                                    className="block w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 cursor-pointer transition-colors"
                                   >
                                     Delete
                                   </button>
@@ -939,7 +947,7 @@ export default function PatientsPage() {
               type="button"
               onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="px-3 py-2 border border-border rounded-md text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               Previous
             </motion.button>
@@ -953,8 +961,8 @@ export default function PatientsPage() {
                   type="button"
                   onClick={() => handlePageChange(page)}
                   className={`px-3 py-2 border text-sm font-medium rounded-md cursor-pointer transition-colors ${currentPage === page
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border text-foreground hover:bg-secondary'
                     }`}
                 >
                   {page}
@@ -968,13 +976,13 @@ export default function PatientsPage() {
               type="button"
               onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="px-3 py-2 border border-border rounded-md text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               Next
             </motion.button>
           </div>
 
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-muted-foreground">
             Page {currentPage} of {totalPages}
           </div>
         </div>
@@ -987,17 +995,17 @@ export default function PatientsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-md flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="bg-white bg-opacity-95 backdrop-blur-xl rounded-xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 border-opacity-20"
+              className="bg-card bg-opacity-95 backdrop-blur-xl rounded-xl max-w-lg w-full p-6 shadow-2xl border border-border border-opacity-50"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-foreground">
                   {editingPatient ? 'Edit Patient' : 'Add New Patient'}
                 </h3>
                 <motion.button
@@ -1007,9 +1015,9 @@ export default function PatientsPage() {
                   onClick={() => {
                     setShowModal(false);
                     setEditingPatient(null);
-                    setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '' });
+                    setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
                   }}
-                  className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+                  className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1020,7 +1028,7 @@ export default function PatientsPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
                       OP Number <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1032,13 +1040,13 @@ export default function PatientsPage() {
                       }}
                       required
                       placeholder="000001"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
-                    <p className="text-xs text-gray-500 mt-1">6-digit patient number</p>
+                    <p className="text-xs text-muted-foreground mt-1">6-digit patient number</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
                       SID No
                     </label>
                     <input
@@ -1049,13 +1057,13 @@ export default function PatientsPage() {
                         setFormData({ ...formData, sid_no: value });
                       }}
                       placeholder="0001"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
-                    <p className="text-xs text-gray-500 mt-1">4-digit SID number</p>
+                    <p className="text-xs text-muted-foreground mt-1">4-digit SID number</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
                       Age <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1067,14 +1075,14 @@ export default function PatientsPage() {
                       }}
                       required
                       placeholder="25"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Maximum 2 digits</p>
+                    <p className="text-xs text-muted-foreground mt-1">Maximum 2 digits</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     Patient Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1083,20 +1091,20 @@ export default function PatientsPage() {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value.slice(0, 100) })}
                     required
                     placeholder="Mr. John Doe"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
-                  <p className="text-xs text-gray-500 mt-1">{formData.name.length}/100 characters</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formData.name.length}/100 characters</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     Gender <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'M' | 'F' | 'O' })}
                     required
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
+                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
                   >
                     <option value="M">Male</option>
                     <option value="F">Female</option>
@@ -1105,20 +1113,20 @@ export default function PatientsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Address</label>
                   <textarea
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value.slice(0, 100) })}
                     rows={3}
                     placeholder="Patient's address..."
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
-                  <p className="text-xs text-gray-500 mt-1">{formData.address.length}/100 characters</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formData.address.length}/100 characters</p>
                 </div>
 
                 {/* Referred By Section */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Referred By</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Referred By</label>
                   <div className="flex items-center space-x-4 mb-2">
                     <label className="inline-flex items-center cursor-pointer">
                       <input
@@ -1126,9 +1134,9 @@ export default function PatientsPage() {
                         value="self"
                         checked={formData.referralType === 'self'}
                         onChange={(e) => setFormData({ ...formData, referralType: 'self' })}
-                        className="form-radio text-blue-600"
+                        className="form-radio text-primary"
                       />
-                      <span className="ml-2 text-gray-900">Self</span>
+                      <span className="ml-2 text-foreground">Self</span>
                     </label>
                     <label className="inline-flex items-center cursor-pointer">
                       <input
@@ -1136,15 +1144,15 @@ export default function PatientsPage() {
                         value="doctor"
                         checked={formData.referralType === 'doctor'}
                         onChange={(e) => setFormData({ ...formData, referralType: 'doctor' })}
-                        className="form-radio text-blue-600"
+                        className="form-radio text-primary"
                       />
-                      <span className="ml-2 text-gray-900">Doctor</span>
+                      <span className="ml-2 text-foreground">Doctor</span>
                     </label>
                   </div>
 
                   {formData.referralType === 'doctor' && (
                     <div className="relative">
-                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
                         Dr.
                       </span>
                       <input
@@ -1157,16 +1165,16 @@ export default function PatientsPage() {
                         }}
                         onFocus={() => setShowDoctorSuggestions(true)}
                         placeholder="Smith"
-                        className="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full pl-10 bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       />
                       {showDoctorSuggestions && formData.doctorName && (
-                        <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto mt-1">
+                        <div className="absolute z-10 w-full bg-popover border border-border rounded-md shadow-lg max-h-40 overflow-auto mt-1">
                           {doctorSuggestions
                             .filter(doc => doc.toLowerCase().includes(formData.doctorName.toLowerCase()) && doc !== formData.doctorName)
                             .map((doc, idx) => (
                               <div
                                 key={idx}
-                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-gray-900"
+                                className="px-4 py-2 hover:bg-secondary cursor-pointer text-popover-foreground"
                                 onClick={() => {
                                   // Strip "Dr." prefix (case insensitive) to avoid "Dr. Dr." logic
                                   const nameOnly = doc.replace(/^Dr\.?\s*/i, '');
@@ -1194,7 +1202,7 @@ export default function PatientsPage() {
                       setEditingPatient(null);
                       setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="px-4 py-2 border border-border rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
                   >
                     Cancel
                   </motion.button>
@@ -1203,7 +1211,7 @@ export default function PatientsPage() {
                     whileTap={{ scale: 0.95 }}
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center space-x-2 cursor-pointer"
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center space-x-2 cursor-pointer"
                   >
                     {loading && (
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">

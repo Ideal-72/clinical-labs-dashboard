@@ -4,89 +4,30 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
-import { getTestTemplate, getReportGroups, getTestsForGroup } from '@/lib/testTemplates';
-import { getReferenceRangeByGender } from '@/lib/getReferenceRangeByGender';
-
-interface Test {
-    id: string;
-    testName: string;
-    specimen: string;
-    result: string;
-    units: string;
-    referenceRange: string;
-    method: string;
-    notes: string;
-    isHeader?: boolean;
-    rowType?: 'test' | 'note';
-}
-
-interface Section {
-    id: string;
-    name: string;
-    reportGroup: string;
-    tests: Test[];
-}
-
-interface PatientDetails {
-    sidNo: string;
-    branch: string;
-    patientId: string;
-    patientName: string;
-    age: string;
-    sex: string;
-    referredBy: string;
-    referralType: string;
-    doctorName: string;
-    collectedDate: string;
-    receivedDate: string;
-    reportedDate: string;
-    includeHeader: boolean;
-    includeNotes: boolean;
-    comments: string;
-}
+import { useReportForm } from '@/hooks/useReportForm';
+import { getReportGroups } from '@/lib/testTemplates';
 
 export default function CreateLabReportPage() {
     const router = useRouter();
     const { doctorId } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [patientDetails, setPatientDetails] = useState<PatientDetails>({
-        sidNo: '',
-        branch: 'Tiruchendur',
-        patientId: '',
-        patientName: '',
-        age: '',
-        sex: 'Male',
-        referredBy: 'Self',
-        referralType: 'self',
-        doctorName: '',
-        collectedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
-        receivedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
-        reportedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
-        includeHeader: true,
-        includeNotes: true,
-        comments: '',
-    });
-
-    const [sections, setSections] = useState<Section[]>([
-        {
-            id: '1',
-            name: '',
-            reportGroup: '',
-            tests: [
-                {
-                    id: '1',
-                    testName: '',
-                    specimen: '',
-                    result: '',
-                    units: '',
-                    referenceRange: '',
-                    method: '',
-                    notes: '',
-                },
-            ],
-        },
-    ]);
+    const {
+        patientDetails,
+        setPatientDetails,
+        sections,
+        updateTest,
+        addSection,
+        removeSection,
+        updateSectionName,
+        updateSectionGroup,
+        addTest,
+        addNoteRow,
+        removeTest,
+        fetchNextSid,
+        fetchNextPatientId,
+        PREFIXES
+    } = useReportForm(doctorId || null);
 
     // Patient autocomplete state
     const [existingPatients, setExistingPatients] = useState<any[]>([]);
@@ -114,83 +55,6 @@ export default function CreateLabReportPage() {
         fetchNextPatientId();
     }, [doctorId]);
 
-    // Handle patient selection from autocomplete
-    // ... (existing code)
-
-    // Update reference ranges when patient sex changes
-    useEffect(() => {
-        if (!patientDetails.sex) return;
-
-        // Auto-update Name Prefix
-        setPatientDetails(prev => {
-            let newName = prev.patientName;
-            // Remove existing prefixes to avoid duplication/conflicts
-            newName = newName.replace(/^(Mr\.|Mrs\.|Ms\.|Miss\.|Master\.)\s*/i, '');
-
-            if (newName.trim()) {
-                if (patientDetails.sex === 'Male') {
-                    // Simple heuristic: If age < 12 maybe Master? But user asked for Mr. specifically. Stick to Mr.
-                    newName = `Mr. ${newName}`;
-                } else if (patientDetails.sex === 'Female') {
-                    // Default to Mrs. for now as it's common in this specific lab's context context, or maybe Ms. 
-                    // Let's use Mrs. as it's the requested parallel to Mr. usually.
-                    newName = `Mrs. ${newName}`;
-                }
-            }
-            return { ...prev, patientName: newName };
-        });
-
-        setSections(currentSections =>
-            currentSections.map(section => ({
-                ...section,
-                tests: section.tests.map(test => {
-                    if (test.testName) {
-                        const template = getTestTemplate(section.name, test.testName);
-                        if (template && template.referenceRange) {
-                            const newRange = getReferenceRangeByGender(template.referenceRange, patientDetails.sex, patientDetails.age);
-                            // Only update if it's different to avoid unnecessary renders/changes
-                            if (newRange !== test.referenceRange) {
-                                return { ...test, referenceRange: newRange };
-                            }
-                        }
-                    }
-                    return test;
-                })
-            }))
-        );
-    }, [patientDetails.sex]);
-
-
-
-    const fetchNextSid = async () => {
-        try {
-            const response = await fetch('/api/lab-reports/next-sid');
-            if (response.ok) {
-                const data = await response.json();
-                if (data.nextSid) {
-                    setPatientDetails(prev => ({ ...prev, sidNo: data.nextSid }));
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching next SID:', error);
-        }
-    };
-
-    const fetchNextPatientId = async () => {
-        try {
-            const url = doctorId ? `/api/patients/next-id?doctorId=${doctorId}` : '/api/patients/next-id';
-            const response = await fetch(url);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.nextPatientId) {
-                    setPatientDetails(prev => ({ ...prev, patientId: data.nextPatientId }));
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching next Patient ID:', error);
-        }
-    };
-
     const handlePatientSelect = (patient: any) => {
         const isDoctor = patient.referred_by?.startsWith('Dr. ');
         setPatientDetails({
@@ -204,260 +68,9 @@ export default function CreateLabReportPage() {
             doctorName: isDoctor ? patient.referred_by?.replace('Dr. ', '') || '' : ''
         });
 
-        // Auto-fetch SID if not present (or always, based on requirement "unique for every patient")
+        // Auto-fetch SID if not present
         fetchNextSid();
-
         setShowSuggestions(false);
-    };
-
-
-    const addSection = () => {
-        const newSection: Section = {
-            id: Date.now().toString(),
-            name: '',
-            reportGroup: '',
-            tests: [
-                {
-                    id: Date.now().toString(),
-                    testName: '',
-                    specimen: '',
-                    result: '',
-                    units: '',
-                    referenceRange: '',
-                    method: '',
-                    notes: '',
-                },
-            ],
-        };
-        setSections([...sections, newSection]);
-    };
-
-    const removeSection = (sectionId: string) => {
-        setSections(sections.filter((s) => s.id !== sectionId));
-    };
-
-    const updateSectionName = (sectionId: string, name: string) => {
-        setSections(
-            sections.map((s) => (s.id === sectionId ? { ...s, name } : s))
-        );
-    };
-
-    const updateSectionGroup = (sectionId: string, groupName: string) => {
-        const groupTests = getTestsForGroup(groupName);
-        const newTests: Test[] = groupTests.map((t, index) => ({
-            id: Date.now().toString() + index,
-            testName: t.name,
-            specimen: t.template.specimen || '',
-            result: t.template.defaultValue || '',
-            units: t.template.units,
-            referenceRange: getReferenceRangeByGender(t.template.referenceRange, patientDetails.sex, patientDetails.age),
-            method: t.template.method || '',
-            notes: '',
-            isHeader: t.template.type === 'group_header',
-            rowType: t.template.type === 'group_header' ? 'note' : 'test'
-        }));
-
-        setSections(
-            sections.map((s) => (s.id === sectionId ? {
-                ...s,
-                reportGroup: groupName,
-                name: groupName,
-                tests: newTests
-            } : s))
-        );
-    };
-
-    const addTest = (sectionId: string) => {
-        setSections(
-            sections.map((section) => {
-                if (section.id === sectionId) {
-                    const newTest: Test = {
-                        id: Date.now().toString(),
-                        testName: '',
-                        specimen: '',
-                        result: '',
-                        units: '',
-                        referenceRange: '',
-                        method: '',
-                        notes: '',
-                        rowType: 'test',
-                    };
-                    return { ...section, tests: [...section.tests, newTest] };
-                }
-                return section;
-            })
-        );
-    };
-
-    const addNoteRow = (sectionId: string) => {
-        setSections(
-            sections.map((section) => {
-                if (section.id === sectionId) {
-                    const newTest: Test = {
-                        id: Date.now().toString(),
-                        testName: '', // Will store the note content
-                        specimen: '',
-                        result: '',
-                        units: '',
-                        referenceRange: '',
-                        method: '',
-                        notes: '',
-                        rowType: 'note',
-                    };
-                    return { ...section, tests: [...section.tests, newTest] };
-                }
-                return section;
-            })
-        );
-    };
-
-    const removeTest = (sectionId: string, testId: string) => {
-        setSections(
-            sections.map((section) => {
-                if (section.id === sectionId) {
-                    return {
-                        ...section,
-                        tests: section.tests.filter((t) => t.id !== testId),
-                    };
-                }
-                return section;
-            })
-        );
-    };
-
-
-
-    const calculateDependentValues = (tests: Test[]): Test[] => {
-        let updatedTests = [...tests];
-
-        // Helper to find test index
-        const findIndex = (name: string) => updatedTests.findIndex(t => t.testName.toLowerCase() === name.toLowerCase() || t.testName.toLowerCase().includes(name.toLowerCase()));
-
-        const getVal = (name: string) => {
-            const index = findIndex(name);
-            const t = index !== -1 ? updatedTests[index] : null;
-            return t && t.result && !isNaN(parseFloat(t.result)) ? parseFloat(t.result) : null;
-        };
-
-        const setVal = (name: string, val: string) => {
-            const index = findIndex(name);
-            if (index !== -1) {
-                // Update existing
-                updatedTests[index] = { ...updatedTests[index], result: val };
-            }
-        };
-
-        // --- LIPID PROFILE ---
-        const trig = getVal('Triglycerides');
-        const chol = getVal('Cholesterol,Total');
-        const hdl = getVal('Cholesterol,HDL');
-
-        if (trig !== null) {
-            const vldl = (trig / 5).toFixed(1);
-            setVal('Cholesterol,VLDL', vldl);
-        }
-
-        const vldl = getVal('Cholesterol,VLDL'); // Re-fetch
-
-        if (chol !== null && hdl !== null) {
-            setVal('Non-HDLCholesterol', (chol - hdl).toFixed(1));
-            // Note: Template has 'Cholesterol/HDLRatio', not 'Total Cholesterol/HDL Ratio'
-            if (hdl !== 0) {
-                setVal('Cholesterol/HDLRatio', (chol / hdl).toFixed(1));
-            }
-        }
-
-        if (chol !== null && hdl !== null && vldl !== null) {
-            const ldlVal = (chol - hdl - vldl).toFixed(1);
-            setVal('Cholesterol,LDL', ldlVal);
-        }
-
-        const ldl = getVal('Cholesterol,LDL');
-        if (ldl !== null && hdl !== null) {
-            if (hdl !== 0) {
-                setVal('LDL/HDLRatio', (ldl / hdl).toFixed(1));
-            }
-            if (ldl !== 0) {
-                setVal('HDL/LDLRatio', (hdl / ldl).toFixed(1));
-            }
-        }
-
-        // --- DIABETES ---
-        const hba1c = getVal('HbA1c') || getVal('Glycosylated Haemoglobin (HbA1c)');
-        if (hba1c !== null) {
-            setVal('Estimated Average Glucose (eAG)', ((28.7 * hba1c) - 46.7).toFixed(0));
-            setVal('eAG', ((28.7 * hba1c) - 46.7).toFixed(0)); // Keep legacy support just in case
-        }
-
-        // --- LFT (Biochemistry) ---
-        const tp = getVal('TotalProtein.') || getVal('Total Protein');
-        const alb = getVal('Albumin.') || getVal('Albumin');
-        if (tp !== null && alb !== null) {
-            const glob = (tp - alb).toFixed(1);
-            setVal('Globulin.', glob);
-            if (parseFloat(glob) !== 0) setVal('Albumin/Globulin', (alb / parseFloat(glob)).toFixed(1));
-        }
-
-        const sgot = getVal('Aspartateaminotransferase(AST/SGOT)') || getVal('SGOT/AST');
-        const sgpt = getVal('Alanineaminotransferase(ALT/SGPT)') || getVal('SGPT/ALT');
-        if (sgot !== null && sgpt !== null && sgpt !== 0) {
-            setVal('SGOT/SGPT', (sgot / sgpt).toFixed(1));
-        }
-
-        // --- ELECTROLYTES (KFT) ---
-        // Calculation removed as per user request
-        // const na = getVal('Sodium');
-        // const k = getVal('Potassium');
-        // const cl = getVal('Chloride');
-        // if (na !== null && k !== null && cl !== null) {
-        //    setVal('Bicarbonate', ((na + k - cl) / 2).toFixed(1));
-        // }
-
-        return updatedTests;
-    };
-
-    const updateTest = (
-        sectionId: string,
-        testId: string,
-        field: keyof Test,
-        value: string
-    ) => {
-        setSections(
-            sections.map((section) => {
-                if (section.id === sectionId) {
-                    let newTests = section.tests.map((test) => {
-                        if (test.id === testId) {
-                            const updatedTest = { ...test, [field]: value };
-
-                            // Auto-fill when test name changes
-                            if (field === 'testName' && value.trim()) {
-                                const template = getTestTemplate(section.name, value);
-                                if (template) {
-                                    updatedTest.units = template.units;
-                                    updatedTest.referenceRange = getReferenceRangeByGender(template.referenceRange, patientDetails.sex, patientDetails.age);
-                                    if (template.specimen) updatedTest.specimen = template.specimen;
-                                    if (template.method) updatedTest.method = template.method;
-                                }
-                            }
-
-                            return updatedTest;
-                        }
-                        return test;
-                    });
-
-                    // Run calculations if value (result) changed
-                    if (field === 'result') {
-                        newTests = calculateDependentValues(newTests);
-                    }
-
-                    return {
-                        ...section,
-                        tests: newTests,
-                    };
-                }
-                return section;
-            })
-        );
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -493,19 +106,15 @@ export default function CreateLabReportPage() {
                         comments: patientDetails.comments,
                     },
                     sections: validSections.map((section) => {
-                        // First, get all potential row candidates (tests with results or notes)
+                        // First, get all potential row candidates
                         const candidates = section.tests.filter((t) => (t.testName && t.result) || t.rowType === 'note');
 
                         // Then, filter out headers that don't have following content
                         const finalTests = candidates.filter((t, index) => {
                             if (t.isHeader) {
-                                // Look ahead for the next item
                                 const nextItem = candidates[index + 1];
-                                // Keep header only if there is a next item and it's NOT another header
-                                // (meaning it's a test result or a manual note)
                                 return nextItem && !nextItem.isHeader;
                             }
-                            // Always keep real tests and manual notes
                             return true;
                         });
 
@@ -567,66 +176,81 @@ export default function CreateLabReportPage() {
                                 <label className="block text-sm font-medium text-foreground mb-1">
                                     Patient Name *
                                 </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={patientDetails.patientName}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setPatientDetails({ ...patientDetails, patientName: value });
-                                        if (value.trim()) {
-                                            const filtered = existingPatients.filter(p =>
-                                                p.name.toLowerCase().includes(value.toLowerCase())
-                                            );
-                                            setFilteredSuggestions(filtered);
-                                            setShowSuggestions(filtered.length > 0);
-                                        } else {
-                                            setShowSuggestions(false);
-                                        }
-                                    }}
-                                    onBlur={() => {
-                                        setTimeout(() => setShowSuggestions(false), 200);
-                                        // Auto-fetch SID if name is filled and SID is empty
-                                        if (patientDetails.patientName && !patientDetails.sidNo) {
-                                            fetchNextSid();
-                                        }
+                                <div className="flex gap-2">
+                                    <div className="w-24 flex-shrink-0">
+                                        <select
+                                            className="w-full px-2 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                            value={PREFIXES.find(p => patientDetails.patientName.startsWith(p + ' ')) || ''}
+                                            onChange={(e) => {
+                                                const newPrefix = e.target.value;
+                                                // Remove all potential prefixes first
+                                                let name = patientDetails.patientName;
+                                                const prefixRegex = new RegExp(`^(${PREFIXES.map(p => p.replace('.', '\\.')).join('|')})\\s*`, 'i');
+                                                name = name.replace(prefixRegex, '');
 
-                                        // Apply Name Prefix on Blur
-                                        setPatientDetails(prev => {
-                                            let newName = prev.patientName;
-                                            // Make sure to match the compound prefix "Mrs./Ms." FIRST before "Mrs."
-                                            newName = newName.replace(/^(Mrs\.\/Ms\.|Mr\.|Mrs\.|Ms\.|Miss\.|Master\.)\s*/i, '');
-
-                                            if (newName.trim()) {
-                                                if (prev.sex === 'Male') {
-                                                    newName = `Mr. ${newName}`;
-                                                } else if (prev.sex === 'Female') {
-                                                    newName = `Mrs./Ms. ${newName}`;
+                                                // Add new prefix if selected
+                                                if (newPrefix) {
+                                                    name = `${newPrefix} ${name}`;
                                                 }
-                                            }
-
-                                            return newName !== prev.patientName ? { ...prev, patientName: newName } : prev;
-                                        });
-                                    }}
-                                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="Enter patient name"
-                                />
-                                {showSuggestions && (
-                                    <div className="absolute z-10 w-full bg-background border border-border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
-                                        {filteredSuggestions.map(patient => (
-                                            <div
-                                                key={patient.id}
-                                                onClick={() => handlePatientSelect(patient)}
-                                                className="px-3 py-2 hover:bg-secondary cursor-pointer border-b border-border last:border-b-0"
-                                            >
-                                                <div className="font-medium text-foreground">{patient.name}</div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    ID: {patient.opno} | Age: {patient.age} | {patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other'}
-                                                </div>
-                                            </div>
-                                        ))}
+                                                setPatientDetails(prev => ({ ...prev, patientName: name }));
+                                            }}
+                                        >
+                                            <option value="">Prefix</option>
+                                            {PREFIXES.map(prefix => (
+                                                <option key={prefix} value={prefix}>{prefix}</option>
+                                            ))}
+                                        </select>
                                     </div>
-                                )}
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="text"
+                                            required
+                                            value={patientDetails.patientName.replace(new RegExp(`^(${PREFIXES.map(p => p.replace('.', '\\.')).join('|')})\\s*`, 'i'), '')}
+                                            onChange={(e) => {
+                                                const rawName = e.target.value;
+                                                // Preserve existing prefix
+                                                const currentPrefix = PREFIXES.find(p => patientDetails.patientName.startsWith(p + ' ')) || '';
+                                                const fullName = currentPrefix ? `${currentPrefix} ${rawName}` : rawName;
+
+                                                setPatientDetails({ ...patientDetails, patientName: fullName });
+
+                                                if (rawName.trim()) {
+                                                    const filtered = existingPatients.filter(p =>
+                                                        p.name.toLowerCase().includes(rawName.toLowerCase())
+                                                    );
+                                                    setFilteredSuggestions(filtered);
+                                                    setShowSuggestions(filtered.length > 0);
+                                                } else {
+                                                    setShowSuggestions(false);
+                                                }
+                                            }}
+                                            onBlur={() => {
+                                                setTimeout(() => setShowSuggestions(false), 200);
+                                                if (patientDetails.patientName && !patientDetails.sidNo) {
+                                                    fetchNextSid();
+                                                }
+                                            }}
+                                            className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="Enter patient name"
+                                        />
+                                        {showSuggestions && (
+                                            <div className="absolute z-10 w-full bg-background border border-border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                                                {filteredSuggestions.map(patient => (
+                                                    <div
+                                                        key={patient.id}
+                                                        onClick={() => handlePatientSelect(patient)}
+                                                        className="px-3 py-2 hover:bg-secondary cursor-pointer border-b border-border last:border-b-0"
+                                                    >
+                                                        <div className="font-medium text-foreground">{patient.name}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            ID: {patient.opno} | Age: {patient.age} | {patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other'}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="md:col-span-1">

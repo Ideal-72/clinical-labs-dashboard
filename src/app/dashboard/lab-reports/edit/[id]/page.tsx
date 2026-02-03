@@ -4,42 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
+import { useReportForm, Test, Section } from '@/hooks/useReportForm';
 import { getTestTemplate, getReportGroups, getTestsForGroup } from '@/lib/testTemplates';
 import { getReferenceRangeByGender } from '@/lib/getReferenceRangeByGender';
-
-interface Test {
-    id: string;
-    testName: string;
-    specimen: string;
-    result: string;
-    units: string;
-    referenceRange: string;
-    method: string;
-    notes: string;
-    rowType?: 'test' | 'note';
-    isHeader?: boolean;
-}
-
-interface Section {
-    id: string;
-    name: string;
-    reportGroup: string;
-    tests: Test[];
-}
-
-interface PatientDetails {
-    sidNo: string;
-    branch: string;
-    patientId: string;
-    patientName: string;
-    age: string;
-    sex: string;
-    referredBy: string;
-    collectedDate: string;
-    receivedDate: string;
-    reportedDate: string;
-    comments: string;
-}
 
 export default function EditLabReportPage() {
     const router = useRouter();
@@ -49,21 +16,21 @@ export default function EditLabReportPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const [patientDetails, setPatientDetails] = useState<PatientDetails>({
-        sidNo: '',
-        branch: '',
-        patientId: '',
-        patientName: '',
-        age: '',
-        sex: 'Male',
-        referredBy: 'Self',
-        collectedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
-        receivedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
-        reportedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
-        comments: '',
-    });
-
-    const [sections, setSections] = useState<Section[]>([]);
+    const {
+        patientDetails,
+        setPatientDetails,
+        sections,
+        setSections,
+        updateTest,
+        addSection,
+        removeSection,
+        updateSectionName,
+        updateSectionGroup,
+        addTest,
+        addNoteRow,
+        removeTest,
+        PREFIXES
+    } = useReportForm(doctorId || null);
 
     useEffect(() => {
         if (reportId) {
@@ -71,53 +38,8 @@ export default function EditLabReportPage() {
         }
     }, [reportId]);
 
-    // Update reference ranges when patient sex changes
-    useEffect(() => {
-        if (!patientDetails.sex) return;
-
-        // Auto-update Name Prefix
-        setPatientDetails(prev => {
-            let newName = prev.patientName;
-            // Remove existing prefixes to avoid duplication/conflicts
-            newName = newName.replace(/^(Mr\.|Mrs\.|Ms\.|Miss\.|Master\.)\s*/i, '');
-
-            if (newName.trim()) {
-                if (patientDetails.sex === 'Male') {
-                    newName = `Mr. ${newName}`;
-                } else if (patientDetails.sex === 'Female') {
-                    newName = `Mrs. ${newName}`;
-                }
-            }
-            // Only update if changed to prevent loops
-            if (newName !== prev.patientName) {
-                return { ...prev, patientName: newName };
-            }
-            return prev;
-        });
-
-        setSections(currentSections =>
-            currentSections.map(section => ({
-                ...section,
-                tests: section.tests.map(test => {
-                    if (test.testName) {
-                        // We need to look up template again to get the gender-specific range
-                        // But here we rely on the helper which takes the current value.
-                        // Wait, 'test.referenceRange' might be manual.
-                        // Ideally we check if it matches the *previous* gender default.
-                        // For now, let's just update if it looks like a template range.
-                        const templateRaw = getTestsForGroup(section.reportGroup).find(t => t.name === test.testName);
-                        if (templateRaw && templateRaw.template.referenceRange) {
-                            const newRange = getReferenceRangeByGender(templateRaw.template.referenceRange, patientDetails.sex, patientDetails.age);
-                            if (newRange && newRange !== test.referenceRange) {
-                                return { ...test, referenceRange: newRange };
-                            }
-                        }
-                    }
-                    return test;
-                })
-            }))
-        );
-    }, [patientDetails.sex]);
+    // Update reference ranges when patient sex changes (handled by hook)
+    // Removed duplicate useEffect
 
     const fetchReport = async () => {
         try {
@@ -139,29 +61,30 @@ export default function EditLabReportPage() {
                 age: report.age?.toString() || '',
                 sex: report.sex || 'Male',
                 referredBy: report.referred_by || 'Self',
+                referralType: 'self', // Default to self for simplicity
+                doctorName: '',
                 collectedDate: report.collected_date ? new Date(report.collected_date).toISOString().split('T')[0] : '',
                 receivedDate: report.received_date ? new Date(report.received_date).toISOString().split('T')[0] : '',
                 reportedDate: report.reported_date ? new Date(report.reported_date).toISOString().split('T')[0] : '',
+                includeHeader: report.include_header,
+                includeNotes: report.include_notes,
                 comments: report.comments || '',
             });
 
             // Convert sections
             const formattedSections = report.sections.map((section: any) => {
-                const groupName = section.section_name; // Assuming this matches template keys
-                // Check if this section name corresponds to a known report group template
+                const groupName = section.section_name;
                 const templateTestsRaw = getTestsForGroup(groupName);
                 const isKnownGroup = templateTestsRaw.length > 0;
 
                 let finalTests: Test[] = [];
 
                 if (isKnownGroup) {
-                    // Create a map of existing tests for quick lookup by name (case-insensitive)
                     const existingTestsMap = new Map();
                     section.tests.forEach((t: any) => {
                         existingTestsMap.set(t.test_name.toLowerCase().trim(), t);
                     });
 
-                    // 1. Map template tests, merging with existing data if present
                     finalTests = templateTestsRaw.map((t, index) => {
                         const existing = existingTestsMap.get(t.name.toLowerCase().trim());
 
@@ -179,9 +102,8 @@ export default function EditLabReportPage() {
                                 isHeader: t.template.type === 'group_header',
                             };
                         } else {
-                            // New empty test from template
                             return {
-                                id: Date.now().toString() + '-' + index + '-' + Math.random().toString(36).substr(2, 9), // Ensure unique ID
+                                id: Date.now().toString() + '-' + index + '-' + Math.random().toString(36).substr(2, 9),
                                 testName: t.name,
                                 specimen: t.template.specimen || '',
                                 result: t.template.defaultValue || '',
@@ -195,8 +117,6 @@ export default function EditLabReportPage() {
                         }
                     });
 
-                    // 2. Identify and append any "custom" tests from DB that weren't in the template
-                    // (User might have added a custom row in the past)
                     const templateTestNames = new Set(templateTestsRaw.map(t => t.name.toLowerCase().trim()));
                     const extraTests = section.tests.filter((t: any) => !templateTestNames.has(t.test_name.toLowerCase().trim()));
 
@@ -216,7 +136,6 @@ export default function EditLabReportPage() {
                     finalTests = [...finalTests, ...formattedExtraTests];
 
                 } else {
-                    // Fallback: If not a known group, just load what we have
                     finalTests = section.tests.map((test: any) => ({
                         id: test.id,
                         testName: test.test_name,
@@ -248,241 +167,7 @@ export default function EditLabReportPage() {
         }
     };
 
-    const addSection = () => {
-        const newSection: Section = {
-            id: Date.now().toString(),
-            name: '',
-            reportGroup: '',
-            tests: [
-                {
-                    id: Date.now().toString(),
-                    testName: '',
-                    specimen: '',
-                    result: '',
-                    units: '',
-                    referenceRange: '',
-                    method: '',
-                    notes: '',
-                },
-            ],
-        };
-        setSections([...sections, newSection]);
-    };
-
-    const removeSection = (sectionId: string) => {
-        setSections(sections.filter((s) => s.id !== sectionId));
-    };
-
-    const updateSectionName = (sectionId: string, name: string) => {
-        setSections(
-            sections.map((s) => (s.id === sectionId ? { ...s, name } : s))
-        );
-    };
-
-    const updateSectionGroup = (sectionId: string, groupName: string) => {
-        const groupTests = getTestsForGroup(groupName);
-        const newTests: Test[] = groupTests.map((t, index) => ({
-            id: Date.now().toString() + index,
-            testName: t.name,
-            specimen: t.template.specimen || '',
-            result: t.template.defaultValue || '',
-            units: t.template.units,
-            referenceRange: getReferenceRangeByGender(t.template.referenceRange, patientDetails.sex, patientDetails.age),
-            method: t.template.method || '',
-            notes: '',
-        }));
-
-        setSections(
-            sections.map((s) => (s.id === sectionId ? {
-                ...s,
-                reportGroup: groupName,
-                name: groupName,
-                tests: newTests
-            } : s))
-        );
-    };
-
-    const addTest = (sectionId: string) => {
-        setSections(
-            sections.map((section) => {
-                if (section.id === sectionId) {
-                    const newTest: Test = {
-                        id: Date.now().toString(),
-                        testName: '',
-                        specimen: '',
-                        result: '',
-                        units: '',
-                        referenceRange: '',
-                        method: '',
-                        notes: '',
-                        rowType: 'test',
-                    };
-                    return { ...section, tests: [...section.tests, newTest] };
-                }
-                return section;
-            })
-        );
-    };
-
-    const addNoteRow = (sectionId: string) => {
-        setSections(
-            sections.map((section) => {
-                if (section.id === sectionId) {
-                    const newTest: Test = {
-                        id: Date.now().toString(),
-                        testName: '',
-                        specimen: '',
-                        result: '',
-                        units: '',
-                        referenceRange: '',
-                        method: '',
-                        notes: '',
-                        rowType: 'note',
-                    };
-                    return { ...section, tests: [...section.tests, newTest] };
-                }
-                return section;
-            })
-        );
-    };
-
-    const removeTest = (sectionId: string, testId: string) => {
-        setSections(
-            sections.map((section) => {
-                if (section.id === sectionId) {
-                    return {
-                        ...section,
-                        tests: section.tests.filter((t) => t.id !== testId),
-                    };
-                }
-                return section;
-            })
-        );
-    };
-
-
-
-    const calculateDependentValues = (tests: Test[], sectionName?: string): Test[] => {
-        let updatedTests = [...tests];
-
-        // Helper to find test index
-        const findIndex = (name: string) => updatedTests.findIndex(t => t.testName.toLowerCase() === name.toLowerCase() || t.testName.toLowerCase().includes(name.toLowerCase()));
-
-        const getVal = (name: string) => {
-            const index = findIndex(name);
-            const t = index !== -1 ? updatedTests[index] : null;
-            return t && t.result && !isNaN(parseFloat(t.result)) ? parseFloat(t.result) : null;
-        };
-
-        const setVal = (name: string, val: string) => {
-            const index = findIndex(name);
-            if (index !== -1) {
-                // Update existing
-                updatedTests[index] = { ...updatedTests[index], result: val };
-            }
-        };
-
-        // --- LIPID PROFILE ---
-        const trig = getVal('Triglycerides');
-        const chol = getVal('Cholesterol,Total') || getVal('Total Cholesterol');
-        const hdl = getVal('Cholesterol,HDL') || getVal('HDL Cholesterol');
-
-        if (trig !== null) {
-            const vldl = (trig / 5).toFixed(1);
-            setVal('Cholesterol,VLDL', vldl);
-            setVal('VLDL Cholesterol', vldl); // Legacy
-        }
-
-        const vldl = getVal('Cholesterol,VLDL') || getVal('VLDL Cholesterol');
-
-        if (chol !== null && hdl !== null) {
-            setVal('Non-HDLCholesterol', (chol - hdl).toFixed(1));
-            setVal('Non-HDL Cholesterol', (chol - hdl).toFixed(1)); // Legacy
-            if (hdl !== 0) {
-                setVal('Cholesterol/HDLRatio', (chol / hdl).toFixed(1));
-                setVal('Total Cholesterol/HDL Ratio', (chol / hdl).toFixed(1)); // Legacy
-            }
-        }
-
-        if (chol !== null && hdl !== null && vldl !== null) {
-            const ldlVal = (chol - hdl - vldl).toFixed(1);
-            setVal('Cholesterol,LDL', ldlVal);
-            setVal('LDL Cholesterol', ldlVal); // Legacy
-        }
-
-        const ldl = getVal('Cholesterol,LDL') || getVal('LDL Cholesterol');
-        if (ldl !== null && hdl !== null) {
-            if (hdl !== 0) {
-                setVal('LDL/HDLRatio', (ldl / hdl).toFixed(1));
-                setVal('LDL/HDL Ratio', (ldl / hdl).toFixed(1)); // Legacy
-            }
-            if (ldl !== 0) {
-                setVal('HDL/LDLRatio', (hdl / ldl).toFixed(1));
-                setVal('HDL/LDL Ratio', (hdl / ldl).toFixed(1)); // Legacy
-            }
-        }
-
-        // --- DIABETES ---
-        const hba1c = getVal('HbA1c') || getVal('Glycosylated Haemoglobin (HbA1c)');
-        if (hba1c !== null) {
-            setVal('Estimated Average Glucose (eAG)', ((28.7 * hba1c) - 46.7).toFixed(0));
-            setVal('eAG', ((28.7 * hba1c) - 46.7).toFixed(0)); // Keep legacy support just in case
-        }
-
-        // --- LFT (Biochemistry) ---
-        const tp = getVal('TotalProtein.') || getVal('Total Protein');
-        const alb = getVal('Albumin.') || getVal('Albumin');
-        if (tp !== null && alb !== null) {
-            const glob = (tp - alb).toFixed(1);
-            setVal('Globulin.', glob);
-            if (parseFloat(glob) !== 0) setVal('Albumin/Globulin', (alb / parseFloat(glob)).toFixed(1));
-        }
-
-        const sgot = getVal('Aspartateaminotransferase(AST/SGOT)') || getVal('SGOT/AST');
-        const sgpt = getVal('Alanineaminotransferase(ALT/SGPT)') || getVal('SGPT/ALT');
-        if (sgot !== null && sgpt !== null && sgpt !== 0) {
-            setVal('SGOT/SGPT', (sgot / sgpt).toFixed(1));
-        }
-
-        // --- ELECTROLYTES (KFT) ---
-        // Calculation removed as per user request
-        // const na = getVal('Sodium.') || getVal('Sodium');
-        // const k = getVal('Potassium.') || getVal('Potassium');
-        // const cl = getVal('Chloride.') || getVal('Chloride');
-        // if (na !== null && k !== null && cl !== null) {
-        //     setVal('Bicarbonate.', ((na + k - cl) / 2).toFixed(1));
-        // }
-
-        return updatedTests;
-    };
-
-    const updateTest = (
-        sectionId: string,
-        testId: string,
-        field: keyof Test,
-        value: string
-    ) => {
-        setSections(
-            sections.map((section) => {
-                if (section.id === sectionId) {
-                    let newTests = section.tests.map((test) =>
-                        test.id === testId ? { ...test, [field]: value } : test
-                    );
-
-                    // Run calculations if value (result) changed
-                    if (field === 'result') {
-                        newTests = calculateDependentValues(newTests);
-                    }
-
-                    return {
-                        ...section,
-                        tests: newTests,
-                    };
-                }
-                return section;
-            })
-        );
-    };
+    // Removed duplicated helper functions (addSection etc) as they are imported from hook
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -516,38 +201,13 @@ export default function EditLabReportPage() {
                         comments: patientDetails.comments,
                     },
                     sections: validSections.map((section) => {
-                        // Check for Mantoux completion
-                        const durationTest = section.tests.find(t => t.testName === 'Duration');
-                        const indurationTest = section.tests.find(t => t.testName === 'Induration');
-                        const isMantouxComplete = ((durationTest?.result?.trim() ?? '') !== '') && ((indurationTest?.result?.trim() ?? '') !== '');
+                        const candidates = section.tests.filter((t) => (t.testName && t.result) || t.rowType === 'note');
 
-                        // First, get all potential row candidates (tests with results or notes)
-                        const candidates = section.tests.filter((t) => {
-                            if (t.testName === 'TuberculinDose') {
-                                return isMantouxComplete;
-                            }
-                            return (t.testName && t.result) || t.rowType === 'note';
-                        });
-
-                        // Then, filter out headers that don't have following content
                         const finalTests = candidates.filter((t, index) => {
-                            // Check if this is a group header based on template
-                            const template = getTestTemplate(section.name, t.testName);
-                            const isGroupHeader = t.rowType === 'note' && template?.type === 'group_header';
-
-                            if (isGroupHeader) {
-                                // Look ahead for the next item
+                            if (t.isHeader) {
                                 const nextItem = candidates[index + 1];
-                                if (!nextItem) return false; // End of list, discard header
-
-                                // Check if next item is also a group header
-                                const nextTemplate = getTestTemplate(section.name, nextItem.testName);
-                                const nextIsGroupHeader = nextItem.rowType === 'note' && nextTemplate?.type === 'group_header';
-
-                                // Keep header only if the next item is NOT another group header
-                                return !nextIsGroupHeader;
+                                return nextItem && !nextItem.isHeader;
                             }
-                            // Always keep real tests and manual notes
                             return true;
                         });
 

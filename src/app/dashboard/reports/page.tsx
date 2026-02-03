@@ -51,8 +51,8 @@ export default function ReportsPage() {
         return getISTDateTime().date;
     });
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+    const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') || '');
 
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(false);
@@ -414,12 +414,42 @@ export default function ReportsPage() {
                                                 {new Date(report.reported_date).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => handleViewReport(report.id)}
-                                                    className="inline-flex items-center px-3 py-1.5 border border-primary text-primary text-xs font-medium rounded-md hover:bg-primary/10 transition-colors"
-                                                >
-                                                    View Report
-                                                </button>
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => router.push(`/dashboard/lab-reports/edit/${report.id}`)}
+                                                        className="p-1.5 text-blue-500 hover:bg-blue-500/10 rounded-md transition-colors"
+                                                        title="Edit Report"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleViewReport(report.id)}
+                                                        className="inline-flex items-center px-3 py-1.5 border border-primary text-primary text-xs font-medium rounded-md hover:bg-primary/10 transition-colors"
+                                                    >
+                                                        View
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+                                                                try {
+                                                                    const res = await fetch(`/api/lab-reports/${report.id}`, { method: 'DELETE' });
+                                                                    if (res.ok) {
+                                                                        fetchReports();
+                                                                    } else {
+                                                                        alert('Failed to delete report');
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error(err);
+                                                                    alert('Error deleting report');
+                                                                }
+                                                            }
+                                                        }}
+                                                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
+                                                        title="Delete Report"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
