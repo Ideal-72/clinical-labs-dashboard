@@ -423,8 +423,15 @@ export default function ViewLabReportPage() {
 
             currentY = (doc as any).lastAutoTable.finalY + 5;
 
+            // Divider Line
+            doc.setLineWidth(0.1); // Thin line
+            doc.setDrawColor(150, 150, 150); // Gray color
+            doc.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += 10;
+
             // Title
             doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0); // Black
             doc.setFont("helvetica", "bold");
             doc.text("Final Test Report", pageWidth / 2, currentY, { align: 'center' });
             currentY += 8;
@@ -436,50 +443,48 @@ export default function ViewLabReportPage() {
                 if (!section.tests || section.tests.length === 0) return;
 
                 // Section Header
-                tableBody.push([{ 
-                    content: section.section_name || 'SECTION', 
-                    colSpan: 4, 
-                    styles: { fillColor: [240, 240, 240], fontStyle: 'bold', halign: 'center' } 
+                tableBody.push([{
+                    content: section.section_name || 'SECTION',
+                    colSpan: 4,
+                    styles: { fillColor: [240, 240, 240], fontStyle: 'bold', halign: 'center' }
                 }]);
 
                 section.tests.forEach(test => {
-                     // Check special conditions like CROSS MATCHING empty result
-                     if (test.test_name === 'CROSS MATCHING TEST' && (!test.result || !test.result.trim())) return;
+                    // Check special conditions like CROSS MATCHING empty result
+                    if (test.test_name === 'CROSS MATCHING TEST' && (!test.result || !test.result.trim())) return;
 
-                     // Mantoux Logic
-                     const mantouxItems = ['TuberculinDose', 'Duration', 'Induration', 'Tuberculin skin (Mantoux) Test'];
-                     if (mantouxItems.includes(test.test_name)) {
-                        // Simply checking if we have valid results in the set, but simplified for PDF:
-                        // If result is empty for these specific ones, maybe skip? 
-                        // For now render them as is, consistent with web view logic which hides them.
-                        // Ideally we pre-filter, but for simplicity we assume the web logic is cleaner.
-                        // Let's rely on basic result check.
-                     }
+                    // Mantoux Logic omitted for brevity as it's just a check
 
-                     const analysis = analyzeResult(test.result, test.reference_range, report.sex, report.age);
-                     const isBold = analysis.isAbnormal;
+                    const analysis = analyzeResult(test.result, test.reference_range, report.sex, report.age);
+                    const isBold = analysis.isAbnormal;
 
-                     // Row Type Note
-                     if (test.row_type === 'note') {
-                         tableBody.push([{ content: test.test_name, colSpan: 4, styles: { fontStyle: 'bold', halign: 'left' } }]);
-                         return;
-                     }
+                    // Clean result: Remove '%' and extra spaces to make it look like a specific decimal
+                    let displayResult = test.result;
+                    if (displayResult) {
+                        displayResult = displayResult.replace(/%/g, '').trim();
+                    }
 
-                     // Regular Row
-                     tableBody.push([
-                         { content: `${test.test_name}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
-                         { 
-                            content: test.result + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' ▲' : ' ▼') : ''), 
-                            styles: { fontStyle: isBold ? 'bold' : 'normal', halign: 'center' } 
-                         },
-                         { content: test.units || '', styles: { halign: 'center' } },
-                         { content: `${(test.reference_range || '').replace(/\\n/g, '\n')}\n${test.method ? `(${test.method})` : ''}`, styles: { fontSize: 8 } }
-                     ]);
+                    // Row Type Note
+                    if (test.row_type === 'note') {
+                        tableBody.push([{ content: test.test_name, colSpan: 4, styles: { fontStyle: 'bold', halign: 'left' } }]);
+                        return;
+                    }
 
-                     // Notes
-                     if (test.notes) {
-                         tableBody.push([{ content: `Note: ${test.notes}`, colSpan: 4, styles: { fontStyle: 'italic', fontSize: 8, textColor: [100, 100, 100] } }]);
-                     }
+                    // Regular Row
+                    tableBody.push([
+                        { content: `${test.test_name}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
+                        {
+                            content: displayResult + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' ▲' : ' ▼') : ''),
+                            styles: { fontStyle: isBold ? 'bold' : 'normal', halign: 'center' }
+                        },
+                        { content: test.units || '', styles: { halign: 'center' } },
+                        { content: `${(test.reference_range || '').replace(/\\n/g, '\n')}\n${test.method ? `(${test.method})` : ''}`, styles: { fontSize: 8 } }
+                    ]);
+
+                    // Notes
+                    if (test.notes) {
+                        tableBody.push([{ content: `Note: ${test.notes}`, colSpan: 4, styles: { fontStyle: 'italic', fontSize: 8, textColor: [100, 100, 100] } }]);
+                    }
                 });
             });
 
@@ -505,53 +510,53 @@ export default function ViewLabReportPage() {
                 rowPageBreak: 'avoid', // IMPORTANT: Avoid splitting rows
                 margin: { top: 15, bottom: 40, left: margin, right: margin }, // Bottom margin for footer
                 didDrawPage: async (data) => {
-                     // Footer on every page
-                     const footerY = pageHeight - 35;
-                     
-                     // Signature Image
-                     try {
-                         const signature = await loadImage('/signature-lalitha.jpg').catch(() => null);
-                         if (signature) {
-                             doc.addImage(signature, 'JPEG', pageWidth - 50, footerY, 30, 15);
-                         }
-                     } catch (e) {}
+                    // Footer on every page
+                    const footerY = pageHeight - 35;
 
-                     doc.setFontSize(10);
-                     doc.setFont('helvetica', 'normal');
-                     
-                     // Signature Text
-                     doc.line(pageWidth - 60, footerY + 16, pageWidth - 15, footerY + 16); // Line
-                     doc.setFont("helvetica", "bold");
-                     doc.text("K.LALITHA", pageWidth - 37.5, footerY + 21, { align: 'center' });
-                     doc.setFontSize(8);
-                     doc.text("BSC (MLT)", pageWidth - 37.5, footerY + 25, { align: 'center' });
-                     doc.setFont("helvetica", "normal");
-                     doc.text("Lab Incharge", pageWidth - 37.5, footerY + 29, { align: 'center' });
+                    // Signature Image
+                    try {
+                        const signature = await loadImage('/signature-lalitha.jpg').catch(() => null);
+                        if (signature) {
+                            doc.addImage(signature, 'JPEG', pageWidth - 50, footerY, 30, 15);
+                        }
+                    } catch (e) { }
 
-                     // Page Number
-                     const pageNum = "Page " + (doc as any).internal.getNumberOfPages();
-                     doc.setFontSize(8);
-                     doc.text(pageNum, pageWidth / 2, pageHeight - 5, { align: 'center' });
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
 
-                     if (showHeader) {
-                         doc.setFontSize(8);
-                         doc.text("Processing Location: 137/54 Ground Floor, Mela Ratha Veethi, Tiruchendur", pageWidth / 2, pageHeight - 10, { align: 'center' });
-                     }
+                    // Signature Text
+                    doc.line(pageWidth - 60, footerY + 16, pageWidth - 15, footerY + 16); // Line
+                    doc.setFont("helvetica", "bold");
+                    doc.text("K.LALITHA", pageWidth - 37.5, footerY + 21, { align: 'center' });
+                    doc.setFontSize(8);
+                    doc.text("BSC (MLT)", pageWidth - 37.5, footerY + 25, { align: 'center' });
+                    doc.setFont("helvetica", "normal");
+                    doc.text("Lab Incharge", pageWidth - 37.5, footerY + 29, { align: 'center' });
+
+                    // Page Number
+                    const pageNum = "Page " + (doc as any).internal.getNumberOfPages();
+                    doc.setFontSize(8);
+                    doc.text(pageNum, pageWidth / 2, pageHeight - 5, { align: 'center' });
+
+                    if (showHeader) {
+                        doc.setFontSize(8);
+                        doc.text("Processing Location: 137/54 Ground Floor, Mela Ratha Veethi, Tiruchendur", pageWidth / 2, pageHeight - 10, { align: 'center' });
+                    }
                 }
             });
 
             // End of Report Note
             if (report.comments) {
-                 const finalY = (doc as any).lastAutoTable.finalY + 10;
-                 doc.setFontSize(10);
-                 doc.setFont("helvetica", "bold");
-                 doc.text(`NOTE: ${report.comments}`, margin, finalY);
+                const finalY = (doc as any).lastAutoTable.finalY + 10;
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text(`NOTE: ${report.comments}`, margin, finalY);
             }
 
             const endY = (doc as any).lastAutoTable.finalY + 20;
-             doc.setFontSize(10);
-             doc.setFont("helvetica", "bold");
-             doc.text("*** End of Report ***", pageWidth / 2, endY, { align: 'center' });
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("*** End of Report ***", pageWidth / 2, endY, { align: 'center' });
 
             doc.save(`Lab_Report_${report.sid_no || 'Draft'}.pdf`);
 
