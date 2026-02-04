@@ -40,6 +40,20 @@ export interface PatientDetails {
     comments: string;
 }
 
+// Helper to get current time in IST (Asia/Kolkata) formatted as YYYY-MM-DDTHH:mm
+const getISTDateTimeString = () => {
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+
+    const year = istTime.getFullYear();
+    const month = String(istTime.getMonth() + 1).padStart(2, '0');
+    const day = String(istTime.getDate()).padStart(2, '0');
+    const hours = String(istTime.getHours()).padStart(2, '0');
+    const minutes = String(istTime.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 export const useReportForm = (doctorId?: string | number | null) => {
     const [patientDetails, setPatientDetails] = useState<PatientDetails>({
         sidNo: '',
@@ -51,9 +65,9 @@ export const useReportForm = (doctorId?: string | number | null) => {
         referredBy: 'Self',
         referralType: 'self',
         doctorName: '',
-        collectedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
-        receivedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
-        reportedDate: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16),
+        collectedDate: getISTDateTimeString(),
+        receivedDate: getISTDateTimeString(),
+        reportedDate: getISTDateTimeString(),
         includeHeader: true,
         includeNotes: false,
         comments: '',
