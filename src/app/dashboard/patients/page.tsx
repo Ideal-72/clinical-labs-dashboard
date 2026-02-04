@@ -54,8 +54,18 @@ export default function PatientsPage() {
     gender: 'M' as 'M' | 'F' | 'O',
     address: '',
     referralType: 'self',
+    opno: '',
+    sid_no: '',
+    prefix: 'Mr.',
+    name: '',
+    age: '',
+    gender: 'M' as 'M' | 'F' | 'O',
+    address: '',
+    referralType: 'self',
     doctorName: ''
   });
+
+  const PREFIXES = ['Mr.', 'Mrs.', 'Ms.', 'Miss', 'Master', 'Dr.'];
   const [loading, setLoading] = useState(false);
 
   // Doctor suggestions state
@@ -264,14 +274,18 @@ export default function PatientsPage() {
     try {
       const url = '/api/patients';
       const method = editingPatient ? 'PUT' : 'POST';
+      const fullPatientName = `${formData.prefix} ${formData.name}`.trim();
+
       const body = editingPatient
         ? {
           id: editingPatient.id,
           ...formData,
+          name: fullPatientName,
           referred_by: formData.referralType === 'self' ? 'Self' : (formData.doctorName ? `Dr. ${formData.doctorName}` : 'Self')
         }
         : {
           ...formData,
+          name: fullPatientName,
           opno: formData.opno || generateNextOpno(),
           sid_no: formData.sid_no || generateNextSid(),
           referred_by: formData.referralType === 'self' ? 'Self' : (formData.doctorName ? `Dr. ${formData.doctorName}` : 'Self')
@@ -291,7 +305,9 @@ export default function PatientsPage() {
         fetchDoctors(); // Refresh doctor list to include newly added doctor
         setShowModal(false);
         setEditingPatient(null);
-        setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
+        setShowModal(false);
+        setEditingPatient(null);
+        setFormData({ opno: '', sid_no: '', prefix: 'Mr.', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
       } else {
         const error = await response.json();
         alert('Error: ' + error.error);
@@ -307,10 +323,24 @@ export default function PatientsPage() {
   const handleEdit = (patient: Patient) => {
     setEditingPatient(patient);
     const isDoctor = patient.referred_by?.startsWith('Dr. ');
+
+    // Split name into prefix and rest
+    let prefix = 'Mr.';
+    let name = patient.name;
+
+    const sortedPrefixes = [...PREFIXES].sort((a, b) => b.length - a.length);
+    const matchedPrefix = sortedPrefixes.find(p => patient.name.startsWith(p + ' '));
+
+    if (matchedPrefix) {
+      prefix = matchedPrefix;
+      name = patient.name.substring(matchedPrefix.length).trim();
+    }
+
     setFormData({
       opno: patient.opno,
       sid_no: patient.sid_no || '',
-      name: patient.name,
+      prefix,
+      name,
       age: patient.age.toString(),
       gender: patient.gender,
       address: patient.address || '',
@@ -1015,7 +1045,8 @@ export default function PatientsPage() {
                   onClick={() => {
                     setShowModal(false);
                     setEditingPatient(null);
-                    setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
+                    setEditingPatient(null);
+                    setFormData({ opno: '', sid_no: '', prefix: 'Mr.', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
                   }}
                   className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                 >
@@ -1085,14 +1116,25 @@ export default function PatientsPage() {
                   <label className="block text-sm font-medium text-muted-foreground mb-2">
                     Patient Name <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value.slice(0, 100) })}
-                    required
-                    placeholder="Mr. John Doe"
-                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.prefix}
+                      onChange={(e) => setFormData({ ...formData, prefix: e.target.value })}
+                      className="w-24 bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    >
+                      {PREFIXES.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value.slice(0, 100) })}
+                      required
+                      placeholder="John Doe"
+                      className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    />
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">{formData.name.length}/100 characters</p>
                 </div>
 
@@ -1200,7 +1242,7 @@ export default function PatientsPage() {
                       setShowModal(false);
                       setEditingPatient(null);
                       setEditingPatient(null);
-                      setFormData({ opno: '', sid_no: '', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
+                      setFormData({ opno: '', sid_no: '', prefix: 'Mr.', name: '', age: '', gender: 'M', address: '', referralType: 'self', doctorName: '' });
                     }}
                     className="px-4 py-2 border border-border rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
                   >
