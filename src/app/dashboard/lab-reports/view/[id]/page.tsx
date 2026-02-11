@@ -485,7 +485,7 @@ export default function ViewLabReportPage() {
 
                     // Special handling for TuberculinDose: Result = "0.1 ml of 1 TU PPD", Units = ""
                     if (test.test_name === 'TuberculinDose') {
-                        displayResult = cleanResult;
+                        displayResult = `${cleanResult} ${test.units || ''}`.trim();
                         displayUnits = '';
                     }
 
