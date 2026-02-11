@@ -486,7 +486,11 @@ export default function ViewLabReportPage() {
                     const hasInduration = section.tests.some(t => t.test_name === 'Induration');
                     const isMantouxValid = hasDuration && hasInduration;
 
-                    if ((test.test_name === 'TuberculinDose' || test.test_name === 'Tuberculin skin (Mantoux) Test') && !isMantouxValid) {
+                    const normalizedTestName = test.test_name.trim().toLowerCase();
+                    const isTuberculinDose = normalizedTestName === 'tuberculindose';
+                    const isTuberculinHeader = normalizedTestName === 'tuberculin skin (mantoux) test' || normalizedTestName.includes('mantoux');
+
+                    if ((isTuberculinDose || isTuberculinHeader) && !isMantouxValid) {
                         return;
                     }
 
