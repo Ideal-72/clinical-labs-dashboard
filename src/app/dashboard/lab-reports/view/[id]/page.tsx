@@ -484,9 +484,10 @@ export default function ViewLabReportPage() {
                     tableBody.push([
                         { content: `${test.test_name}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
                         {
-                            // User requested arrows specifically. Using standard unicode arrows.
-                            content: cleanResult + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' ↑' : ' ↓') : ''),
-                            styles: { fontStyle: isBold ? 'bold' : 'normal', halign: 'center' }
+                            // Pass indicator data to cell for custom drawing in didDrawCell
+                            content: cleanResult,
+                            styles: { fontStyle: isBold ? 'bold' : 'normal', halign: 'center' },
+                            indicator: analysis.isAbnormal ? analysis.direction : null
                         },
                         { content: test.units || '', styles: { halign: 'center' } },
                         { content: `${(test.reference_range || '').replace(/\\n/g, '\n')}\n${test.method ? `(${test.method})` : ''}`, styles: { fontSize: 8 } }
@@ -520,6 +521,31 @@ export default function ViewLabReportPage() {
                 },
                 rowPageBreak: 'avoid', // IMPORTANT: Avoid splitting rows
                 margin: { top: 15, bottom: 40, left: margin, right: margin }, // Bottom margin for footer
+                didDrawCell: (data) => {
+                    const cellRaw = data.cell.raw as any;
+                    if (data.section === 'body' && cellRaw && cellRaw.indicator) {
+                        const cell = data.cell;
+                        const textWidth = cell.getTextPos().x - cell.x + doc.getTextWidth(cell.text[0] || '');
+                        // The above calculation might be tricky depending on alignment. 
+                        // Easier: Just put it to the right of the cell content, or fixed position?
+                        // halign is center. 
+
+                        const centerX = cell.x + cell.width / 2;
+                        const textW = doc.getTextWidth(String(cell.text));
+                        const arrowX = centerX + textW / 2 + 2; // 2mm padding
+                        const arrowY = cell.y + cell.height / 2;
+
+                        doc.setFillColor(0, 0, 0); // Black arrow
+
+                        if (cellRaw.indicator === 'high') {
+                            // Up Triangle
+                            doc.triangle(arrowX, arrowY + 1, arrowX + 2, arrowY + 1, arrowX + 1, arrowY - 1, 'F');
+                        } else {
+                            // Down Triangle
+                            doc.triangle(arrowX, arrowY - 1, arrowX + 2, arrowY - 1, arrowX + 1, arrowY + 1, 'F');
+                        }
+                    }
+                },
                 didDrawPage: async (data) => {
                     // Footer on every page
                     const footerY = pageHeight - 35;
