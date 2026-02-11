@@ -484,8 +484,8 @@ export default function ViewLabReportPage() {
                     tableBody.push([
                         { content: `${test.test_name}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
                         {
-                            // Use (H)/(L) instead of unicode arrows to avoid font issues
-                            content: cleanResult + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' (H)' : ' (L)') : ''),
+                            // User requested arrows specifically. Using standard unicode arrows.
+                            content: cleanResult + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' ↑' : ' ↓') : ''),
                             styles: { fontStyle: isBold ? 'bold' : 'normal', halign: 'center' }
                         },
                         { content: test.units || '', styles: { halign: 'center' } },
