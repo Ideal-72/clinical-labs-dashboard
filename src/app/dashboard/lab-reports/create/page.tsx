@@ -68,8 +68,12 @@ export default function CreateLabReportPage() {
             doctorName: isDoctor ? patient.referred_by?.replace('Dr. ', '') || '' : ''
         });
 
-        // Auto-fetch SID if not present
-        fetchNextSid();
+        if (patient.sid_no) {
+            setPatientDetails(prev => ({ ...prev, sidNo: patient.sid_no }));
+        } else {
+            // Auto-fetch SID if not present
+            fetchNextSid();
+        }
         setShowSuggestions(false);
     };
 
