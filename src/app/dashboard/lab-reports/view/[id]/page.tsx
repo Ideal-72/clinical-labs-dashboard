@@ -455,11 +455,31 @@ export default function ViewLabReportPage() {
                     styles: { fillColor: [240, 240, 240], fontStyle: 'bold', halign: 'center' }
                 }]);
 
+                // Calculate Mantoux Validity for this section
+                const hasDuration = section.tests.some(t => {
+                    const tName = t.test_name ? t.test_name.trim().toLowerCase() : '';
+                    const tResult = t.result ? t.result.trim() : '';
+                    return tName === 'duration' && tResult.length > 0;
+                });
+                const hasInduration = section.tests.some(t => {
+                    const tName = t.test_name ? t.test_name.trim().toLowerCase() : '';
+                    const tResult = t.result ? t.result.trim() : '';
+                    return tName === 'induration' && tResult.length > 0;
+                });
+                const isMantouxValid = hasDuration && hasInduration;
+
                 section.tests.forEach(test => {
+                    // 1. GLOBAL FILTER: Check Tuberculin Visibility First
+                    const normalizedTestName = test.test_name ? test.test_name.trim().toLowerCase() : '';
+                    const isTuberculinDose = normalizedTestName === 'tuberculindose';
+                    const isTuberculinHeader = normalizedTestName === 'tuberculin skin (mantoux) test' || normalizedTestName.includes('mantoux');
+
+                    if ((isTuberculinDose || isTuberculinHeader) && !isMantouxValid) {
+                        return; // Skip rendering entirely
+                    }
+
                     // Check special conditions like CROSS MATCHING empty result
                     if (test.test_name === 'CROSS MATCHING TEST' && (!test.result || !test.result.trim())) return;
-
-                    // Mantoux Logic omitted for brevity as it's just a check
 
                     // Clean result first for BOTH analysis and display
                     let cleanResult = test.result;
@@ -477,41 +497,6 @@ export default function ViewLabReportPage() {
                     // Row Type Note
                     if (test.row_type === 'note') {
                         tableBody.push([{ content: test.test_name, colSpan: 4, styles: { fontStyle: 'bold', halign: 'left' } }]);
-                        return;
-                    }
-
-                    // Check if Mantoux logic applies
-                    // TuberculinDose and its header should ONLY appear if Duration and Induration are present AND have data
-                    const hasDuration = section.tests.some(t => {
-                        const tName = t.test_name.trim().toLowerCase();
-                        const tResult = t.result ? t.result.trim() : '';
-                        return tName === 'duration' && tResult.length > 0;
-                    });
-                    const hasInduration = section.tests.some(t => {
-                        const tName = t.test_name.trim().toLowerCase();
-                        const tResult = t.result ? t.result.trim() : '';
-                        return tName === 'induration' && tResult.length > 0;
-                    });
-                    const isMantouxValid = hasDuration && hasInduration;
-
-                    // Debugging Tuberculin Logic
-                    const normalizedTestName = test.test_name.trim().toLowerCase();
-                    const isTuberculinDose = normalizedTestName === 'tuberculindose';
-                    const isTuberculinHeader = normalizedTestName === 'tuberculin skin (mantoux) test' || normalizedTestName.includes('mantoux');
-
-                    if (isTuberculinHeader || isTuberculinDose) {
-                        console.log('Tuberculin Check:', {
-                            name: test.test_name,
-                            normalized: normalizedTestName,
-                            isHeader: isTuberculinHeader,
-                            isDose: isTuberculinDose,
-                            hasDuration,
-                            hasInduration,
-                            isValid: isMantouxValid
-                        });
-                    }
-
-                    if ((isTuberculinDose || isTuberculinHeader) && !isMantouxValid) {
                         return;
                     }
 
