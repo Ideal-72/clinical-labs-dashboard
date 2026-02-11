@@ -552,9 +552,9 @@ export default function ViewLabReportPage() {
 
                     // Signature removed from footer - moved to end of report
                     // Page Number
-                    const pageNum = "Page " + (doc as any).internal.getNumberOfPages();
+                    const pageNum = String((doc as any).internal.getNumberOfPages());
                     doc.setFontSize(8);
-                    doc.text(pageNum, pageWidth / 2, pageHeight - 5, { align: 'center' });
+                    doc.text(pageNum, pageWidth - margin, pageHeight - 5, { align: 'right' });
 
                     if (showHeader) {
                         doc.setFontSize(8);
