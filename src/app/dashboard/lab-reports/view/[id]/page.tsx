@@ -481,9 +481,17 @@ export default function ViewLabReportPage() {
                     }
 
                     // Check if Mantoux logic applies
-                    // TuberculinDose and its header should ONLY appear if Duration and Induration are present
-                    const hasDuration = section.tests.some(t => t.test_name === 'Duration');
-                    const hasInduration = section.tests.some(t => t.test_name === 'Induration');
+                    // TuberculinDose and its header should ONLY appear if Duration and Induration are present AND have data
+                    const hasDuration = section.tests.some(t => {
+                        const tName = t.test_name.trim().toLowerCase();
+                        const tResult = t.result ? t.result.trim() : '';
+                        return tName === 'duration' && tResult.length > 0;
+                    });
+                    const hasInduration = section.tests.some(t => {
+                        const tName = t.test_name.trim().toLowerCase();
+                        const tResult = t.result ? t.result.trim() : '';
+                        return tName === 'induration' && tResult.length > 0;
+                    });
                     const isMantouxValid = hasDuration && hasInduration;
 
                     const normalizedTestName = test.test_name.trim().toLowerCase();
