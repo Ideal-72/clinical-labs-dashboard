@@ -494,9 +494,22 @@ export default function ViewLabReportPage() {
                     });
                     const isMantouxValid = hasDuration && hasInduration;
 
+                    // Debugging Tuberculin Logic
                     const normalizedTestName = test.test_name.trim().toLowerCase();
                     const isTuberculinDose = normalizedTestName === 'tuberculindose';
                     const isTuberculinHeader = normalizedTestName === 'tuberculin skin (mantoux) test' || normalizedTestName.includes('mantoux');
+
+                    if (isTuberculinHeader || isTuberculinDose) {
+                        console.log('Tuberculin Check:', {
+                            name: test.test_name,
+                            normalized: normalizedTestName,
+                            isHeader: isTuberculinHeader,
+                            isDose: isTuberculinDose,
+                            hasDuration,
+                            hasInduration,
+                            isValid: isMantouxValid
+                        });
+                    }
 
                     if ((isTuberculinDose || isTuberculinHeader) && !isMantouxValid) {
                         return;
