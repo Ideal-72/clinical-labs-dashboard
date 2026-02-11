@@ -483,13 +483,10 @@ export default function ViewLabReportPage() {
                     let displayResult = cleanResult;
                     let displayUnits = test.units || '';
 
-                    // Special handling for TuberculinDose to split "0.1 ml of 1 TU PPD"
+                    // Special handling for TuberculinDose: Result = "0.1 ml of 1 TU PPD", Units = ""
                     if (test.test_name === 'TuberculinDose') {
-                        const match = cleanResult.match(/^([\d\.]+)\s+(.+)$/);
-                        if (match) {
-                            displayResult = match[1];
-                            displayUnits = match[2];
-                        }
+                        displayResult = cleanResult;
+                        displayUnits = '';
                     }
 
                     // Regular Row
