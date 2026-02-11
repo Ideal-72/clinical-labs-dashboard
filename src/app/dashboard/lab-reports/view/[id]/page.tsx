@@ -480,6 +480,16 @@ export default function ViewLabReportPage() {
                         return;
                     }
 
+                    // Check if Mantoux logic applies
+                    // TuberculinDose and its header should ONLY appear if Duration and Induration are present
+                    const hasDuration = section.tests.some(t => t.test_name === 'Duration');
+                    const hasInduration = section.tests.some(t => t.test_name === 'Induration');
+                    const isMantouxValid = hasDuration && hasInduration;
+
+                    if ((test.test_name === 'TuberculinDose' || test.test_name === 'Tuberculin skin (Mantoux) Test') && !isMantouxValid) {
+                        return;
+                    }
+
                     let displayResult = cleanResult;
                     let displayUnits = test.units || '';
 
