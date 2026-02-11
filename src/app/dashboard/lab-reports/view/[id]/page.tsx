@@ -609,9 +609,15 @@ export default function ViewLabReportPage() {
                 sigY = 40;
             }
 
-            // "Verified by" (Removed from left)
+            // Left Side: "Verified by" with Line Above
+            doc.setLineWidth(0.5);
+            doc.line(margin, sigY + 16, margin + 40, sigY + 16); // Line above Verified by
 
-            // Signature Image & Text on Right
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Verified by", margin, sigY + 21);
+
+            // Right Side: Signature Image & Details
             try {
                 const signature = await loadImage('/signature-lalitha.jpg').catch(() => null);
                 if (signature) {
@@ -619,22 +625,17 @@ export default function ViewLabReportPage() {
                 }
             } catch (e) { }
 
-            doc.setLineWidth(0.5);
-            doc.line(pageWidth - 60, sigY + 16, pageWidth - 15, sigY + 16); // Line
+            doc.line(pageWidth - 60, sigY + 16, pageWidth - 15, sigY + 16); // Line below signature
 
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
-            doc.text("Verified by", pageWidth - 37.5, sigY + 21, { align: 'center' }); // Added Verified by
-
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
-            doc.text("K.LALITHA", pageWidth - 37.5, sigY + 26, { align: 'center' }); // Shifted down
+            doc.text("K.LALITHA", pageWidth - 37.5, sigY + 21, { align: 'center' });
 
             doc.setFontSize(8);
-            doc.text("BSC (MLT)", pageWidth - 37.5, sigY + 30, { align: 'center' }); // Shifted down
+            doc.text("BSC (MLT)", pageWidth - 37.5, sigY + 25, { align: 'center' });
 
             doc.setFont("helvetica", "normal");
-            doc.text("Lab Incharge", pageWidth - 37.5, sigY + 34, { align: 'center' }); // Shifted down
+            doc.text("Lab Incharge", pageWidth - 37.5, sigY + 29, { align: 'center' });
 
             const endY = sigY + 40;
             doc.setFontSize(10);
