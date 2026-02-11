@@ -55,8 +55,14 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
         return { isAbnormal: false, direction: 'normal' };
     }
 
+    // Pre-clean result string: remove % and if it looks like a spaced number, remove spaces
+    let cleanResultCandidate = resultStr.replace(/%/g, '').trim();
+    if (/^[\d\.\s]+$/.test(cleanResultCandidate)) {
+        cleanResultCandidate = cleanResultCandidate.replace(/\s/g, '');
+    }
+
     // Extract numeric value from result
-    const resultMatch = resultStr.match(/(\d+(\.\d+)?)/);
+    const resultMatch = cleanResultCandidate.match(/(\d+(\.\d+)?)/);
     if (!resultMatch) return { isAbnormal: false, direction: 'normal' };
     const result = parseFloat(resultMatch[0]);
 
@@ -455,21 +461,17 @@ export default function ViewLabReportPage() {
 
                     // Mantoux Logic omitted for brevity as it's just a check
 
-                    const analysis = analyzeResult(test.result, test.reference_range, report.sex, report.age);
-                    const isBold = analysis.isAbnormal;
-
-                    // Clean result: Remove '%' and extra spaces to make it look like a specific decimal
-                    let displayResult = test.result;
-                    if (displayResult) {
-                        // Remove % first
-                        displayResult = displayResult.replace(/%/g, '').trim();
-
-                        // If the result looks like a number with spaces (e.g. "1 0 . 8"), strip all spaces
-                        // We check if it only contains digits, dots, and spaces
-                        if (/^[\d\.\s]+$/.test(displayResult)) {
-                            displayResult = displayResult.replace(/\s/g, '');
+                    // Clean result first for BOTH analysis and display
+                    let cleanResult = test.result;
+                    if (cleanResult) {
+                        cleanResult = cleanResult.replace(/%/g, '').trim();
+                        if (/^[\d\.\s]+$/.test(cleanResult)) {
+                            cleanResult = cleanResult.replace(/\s/g, '');
                         }
                     }
+
+                    const analysis = analyzeResult(cleanResult, test.reference_range, report.sex, report.age);
+                    const isBold = analysis.isAbnormal;
 
                     // Row Type Note
                     if (test.row_type === 'note') {
@@ -481,7 +483,7 @@ export default function ViewLabReportPage() {
                     tableBody.push([
                         { content: `${test.test_name}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
                         {
-                            content: displayResult + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' ▲' : ' ▼') : ''),
+                            content: cleanResult + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' ▲' : ' ▼') : ''),
                             styles: { fontStyle: isBold ? 'bold' : 'normal', halign: 'center' }
                         },
                         { content: test.units || '', styles: { halign: 'center' } },
@@ -906,7 +908,7 @@ export default function ViewLabReportPage() {
                         <button onClick={() => router.push(`/dashboard/lab-reports/edit/${reportId}`)} className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-md transition-colors font-medium">✏️ Edit Report</button>
                         <button onClick={handleDelete} className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-500 rounded-md transition-colors font-medium">🗑️ Delete</button>
                         <button onClick={handlePrint} className="px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-md transition-colors font-medium">🖨️ Print</button>
-                        <button onClick={handleSavePDF} disabled={isGeneratingPdf} className={`px-4 py-2 rounded-md transition-colors font-medium flex items-center gap-2 ${isGeneratingPdf ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed' : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-500'}`}>{isGeneratingPdf ? '⏳ Saving...' : '💾 Save PDF'}</button>
+                        <button onClick={handleSavePDF} disabled={isGeneratingPdf} className={`px-4 py-2 rounded-md transition-colors font-medium flex items-center gap-2 ${isGeneratingPdf ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed' : 'bg-primary/20 hover:bg-primary/30 text-primary'}`}>{isGeneratingPdf ? '⏳ Saving...' : '💾 Save PDF'}</button>
                         <button onClick={() => setShowHeader(!showHeader)} className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-md transition-colors border border-border">{showHeader ? '👁️ Hide Header' : '🚫 Show Header'}</button>
                         <button onClick={() => setShowNotes(!showNotes)} className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-md transition-colors border border-border">{showNotes ? '📝 Hide Notes' : '📋 Show Notes'}</button>
                         <button onClick={handleWhatsAppShare} disabled={isSharing} className={`px-4 py-2 rounded-md transition-colors font-medium flex items-center gap-2 ${isSharing ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed' : 'bg-green-500/20 hover:bg-green-500/30 text-green-500'}`}>{isSharing ? '⌛ Processing...' : '📱 Share on WhatsApp'}</button>
