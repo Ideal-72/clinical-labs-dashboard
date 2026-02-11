@@ -609,10 +609,7 @@ export default function ViewLabReportPage() {
                 sigY = 40;
             }
 
-            // "Verified by" on Left
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
-            doc.text("Verified by", margin, sigY + 10);
+            // "Verified by" (Removed from left)
 
             // Signature Image & Text on Right
             try {
@@ -627,13 +624,17 @@ export default function ViewLabReportPage() {
 
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
-            doc.text("K.LALITHA", pageWidth - 37.5, sigY + 21, { align: 'center' });
+            doc.text("Verified by", pageWidth - 37.5, sigY + 21, { align: 'center' }); // Added Verified by
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("K.LALITHA", pageWidth - 37.5, sigY + 26, { align: 'center' }); // Shifted down
 
             doc.setFontSize(8);
-            doc.text("BSC (MLT)", pageWidth - 37.5, sigY + 25, { align: 'center' });
+            doc.text("BSC (MLT)", pageWidth - 37.5, sigY + 30, { align: 'center' }); // Shifted down
 
             doc.setFont("helvetica", "normal");
-            doc.text("Lab Incharge", pageWidth - 37.5, sigY + 29, { align: 'center' });
+            doc.text("Lab Incharge", pageWidth - 37.5, sigY + 34, { align: 'center' }); // Shifted down
 
             const endY = sigY + 40;
             doc.setFontSize(10);
