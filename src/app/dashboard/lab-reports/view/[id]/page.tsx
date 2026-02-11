@@ -480,16 +480,28 @@ export default function ViewLabReportPage() {
                         return;
                     }
 
+                    let displayResult = cleanResult;
+                    let displayUnits = test.units || '';
+
+                    // Special handling for TuberculinDose to split "0.1 ml of 1 TU PPD"
+                    if (test.test_name === 'TuberculinDose') {
+                        const match = cleanResult.match(/^([\d\.]+)\s+(.+)$/);
+                        if (match) {
+                            displayResult = match[1];
+                            displayUnits = match[2];
+                        }
+                    }
+
                     // Regular Row
                     tableBody.push([
                         { content: `${test.test_name}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
                         {
                             // Pass indicator data to cell for custom drawing in didDrawCell
-                            content: cleanResult,
+                            content: displayResult,
                             styles: { fontStyle: isBold ? 'bold' : 'normal', halign: 'center' },
                             indicator: analysis.isAbnormal ? analysis.direction : null
                         },
-                        { content: test.units || '', styles: { halign: 'center' } },
+                        { content: displayUnits, styles: { halign: 'center' } },
                         { content: `${(test.reference_range || '').replace(/\\n/g, '\n')}\n${test.method ? `(${test.method})` : ''}`, styles: { fontSize: 8 } }
                     ]);
 
