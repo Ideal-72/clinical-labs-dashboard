@@ -465,8 +465,9 @@ export default function ViewLabReportPage() {
                     let cleanResult = test.result;
                     if (cleanResult) {
                         cleanResult = cleanResult.replace(/%/g, '').trim();
-                        if (/^[\d\.\s]+$/.test(cleanResult)) {
-                            cleanResult = cleanResult.replace(/\s/g, '');
+                        // Replace spaces and non-breaking spaces
+                        if (/^[\d\.\s\u00A0]+$/.test(cleanResult)) {
+                            cleanResult = cleanResult.replace(/[\s\u00A0]/g, '');
                         }
                     }
 
@@ -483,7 +484,8 @@ export default function ViewLabReportPage() {
                     tableBody.push([
                         { content: `${test.test_name}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
                         {
-                            content: cleanResult + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' ▲' : ' ▼') : ''),
+                            // Use (H)/(L) instead of unicode arrows to avoid font issues
+                            content: cleanResult + (analysis.isAbnormal ? (analysis.direction === 'high' ? ' (H)' : ' (L)') : ''),
                             styles: { fontStyle: isBold ? 'bold' : 'normal', halign: 'center' }
                         },
                         { content: test.units || '', styles: { halign: 'center' } },
@@ -522,26 +524,7 @@ export default function ViewLabReportPage() {
                     // Footer on every page
                     const footerY = pageHeight - 35;
 
-                    // Signature Image
-                    try {
-                        const signature = await loadImage('/signature-lalitha.jpg').catch(() => null);
-                        if (signature) {
-                            doc.addImage(signature, 'JPEG', pageWidth - 50, footerY, 30, 15);
-                        }
-                    } catch (e) { }
-
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-
-                    // Signature Text
-                    doc.line(pageWidth - 60, footerY + 16, pageWidth - 15, footerY + 16); // Line
-                    doc.setFont("helvetica", "bold");
-                    doc.text("K.LALITHA", pageWidth - 37.5, footerY + 21, { align: 'center' });
-                    doc.setFontSize(8);
-                    doc.text("BSC (MLT)", pageWidth - 37.5, footerY + 25, { align: 'center' });
-                    doc.setFont("helvetica", "normal");
-                    doc.text("Lab Incharge", pageWidth - 37.5, footerY + 29, { align: 'center' });
-
+                    // Signature removed from footer - moved to end of report
                     // Page Number
                     const pageNum = "Page " + (doc as any).internal.getNumberOfPages();
                     doc.setFontSize(8);
@@ -562,7 +545,42 @@ export default function ViewLabReportPage() {
                 doc.text(`NOTE: ${report.comments}`, margin, finalY);
             }
 
-            const endY = (doc as any).lastAutoTable.finalY + 20;
+            // --- Signature Block (End of Report) ---
+            let sigY = (doc as any).lastAutoTable.finalY + (report.comments ? 25 : 15);
+
+            // Ensure space for signature
+            if (sigY > pageHeight - 40) {
+                doc.addPage();
+                sigY = 40;
+            }
+
+            // "Verified by" on Left
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Verified by", margin, sigY + 10);
+
+            // Signature Image & Text on Right
+            try {
+                const signature = await loadImage('/signature-lalitha.jpg').catch(() => null);
+                if (signature) {
+                    doc.addImage(signature, 'JPEG', pageWidth - 50, sigY, 30, 15);
+                }
+            } catch (e) { }
+
+            doc.setLineWidth(0.5);
+            doc.line(pageWidth - 60, sigY + 16, pageWidth - 15, sigY + 16); // Line
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("K.LALITHA", pageWidth - 37.5, sigY + 21, { align: 'center' });
+
+            doc.setFontSize(8);
+            doc.text("BSC (MLT)", pageWidth - 37.5, sigY + 25, { align: 'center' });
+
+            doc.setFont("helvetica", "normal");
+            doc.text("Lab Incharge", pageWidth - 37.5, sigY + 29, { align: 'center' });
+
+            const endY = sigY + 40;
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
             doc.text("*** End of Report ***", pageWidth / 2, endY, { align: 'center' });
