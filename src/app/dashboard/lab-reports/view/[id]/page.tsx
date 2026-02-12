@@ -571,9 +571,17 @@ export default function ViewLabReportPage() {
                         { content: `${(test.reference_range || '').replace(/\\n/g, '\n')}\n${test.method ? `(${test.method})` : ''}`, styles: { fontSize: 8 } }
                     ]);
 
-                    // Notes
+                    // Notes (Manual)
                     if (test.notes) {
                         tableBody.push([{ content: `Note: ${test.notes}`, colSpan: 4, styles: { fontStyle: 'italic', fontSize: 8, textColor: [100, 100, 100] } }]);
+                    }
+
+                    // Clinical Notes (Template)
+                    if (showNotes) {
+                        const template = getTestTemplate(section.section_name, test.test_name);
+                        if (template?.clinicalNote) {
+                            tableBody.push([{ content: `Note: ${template.clinicalNote}`, colSpan: 4, styles: { fontStyle: 'italic', fontSize: 8, textColor: [100, 100, 100], fillColor: [245, 245, 245] } }]);
+                        }
                     }
                 });
             });
