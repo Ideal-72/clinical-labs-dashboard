@@ -573,14 +573,23 @@ export default function ViewLabReportPage() {
 
                     // Notes (Manual)
                     if (test.notes) {
-                        tableBody.push([{ content: `Note: ${test.notes}`, colSpan: 4, styles: { fontStyle: 'italic', fontSize: 8, textColor: [100, 100, 100] } }]);
+                        const cleanNote = test.notes.replace(/\*\*/g, '');
+                        // Check if original note was intended to be fully bold (simple heuristic)
+                        const isImportedBold = test.notes.trim().startsWith('**') && test.notes.trim().endsWith('**');
+                        const noteStyle = isImportedBold ? 'bolditalic' : 'italic';
+
+                        tableBody.push([{ content: `Note: ${cleanNote}`, colSpan: 4, styles: { fontStyle: noteStyle, fontSize: 8, textColor: [100, 100, 100] } }]);
                     }
 
                     // Clinical Notes (Template)
                     if (showNotes) {
                         const template = getTestTemplate(section.section_name, test.test_name);
                         if (template?.clinicalNote) {
-                            tableBody.push([{ content: `Note: ${template.clinicalNote}`, colSpan: 4, styles: { fontStyle: 'italic', fontSize: 8, textColor: [100, 100, 100], fillColor: [245, 245, 245] } }]);
+                            const cleanClinicalNote = template.clinicalNote.replace(/\*\*/g, '');
+                            const isClinicalBold = template.clinicalNote.trim().startsWith('**') && template.clinicalNote.trim().endsWith('**');
+                            const clinicalNoteStyle = isClinicalBold ? 'bolditalic' : 'italic';
+
+                            tableBody.push([{ content: `Note: ${cleanClinicalNote}`, colSpan: 4, styles: { fontStyle: clinicalNoteStyle, fontSize: 8, textColor: [100, 100, 100], fillColor: [245, 245, 245] } }]);
                         }
                     }
                 });
