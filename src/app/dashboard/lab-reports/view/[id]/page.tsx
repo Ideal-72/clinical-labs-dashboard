@@ -571,25 +571,51 @@ export default function ViewLabReportPage() {
                         { content: `${(test.reference_range || '').replace(/\\n/g, '\n')}\n${test.method ? `(${test.method})` : ''}`, styles: { fontSize: 8 } }
                     ]);
 
+                    // Helper to process and add note rows
+                    const addNoteRows = (noteText: string, isTemplate: boolean) => {
+                        if (!noteText) return;
+
+                        // Split by newlines to handle multi-paragraph notes
+                        const lines = noteText.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+
+                        lines.forEach((line, index) => {
+                            // Check for bold wrapping **...**
+                            const isBold = line.startsWith('**') && line.endsWith('**');
+                            const cleanLine = line.replace(/\*\*/g, '');
+
+                            // Determine style
+                            // Template notes get a background color, manual ones don't
+                            const rowStyle = {
+                                fontStyle: isBold ? 'bold' : 'italic', // Changed to pure bold for emphasis if requested
+                                fontSize: 8,
+                                textColor: isBold ? [0, 0, 0] : [100, 100, 100], // Black if bold, Gray if italic
+                                fillColor: isTemplate ? [245, 245, 245] : undefined
+                            };
+
+                            // Prefix logic: Add "Note:" only to the first line, AND only if it's not already there
+                            let content = cleanLine;
+                            if (index === 0 && !cleanLine.toLowerCase().startsWith('note:') && !cleanLine.toLowerCase().startsWith('interpretation:')) {
+                                content = `Note: ${cleanLine}`;
+                            }
+
+                            tableBody.push([{
+                                content: content,
+                                colSpan: 4,
+                                styles: rowStyle
+                            }]);
+                        });
+                    };
+
                     // Notes (Manual)
                     if (test.notes) {
-                        const cleanNote = test.notes.replace(/\*\*/g, '');
-                        // Check if original note was intended to be fully bold (simple heuristic)
-                        const isImportedBold = test.notes.trim().startsWith('**') && test.notes.trim().endsWith('**');
-                        const noteStyle = isImportedBold ? 'bolditalic' : 'italic';
-
-                        tableBody.push([{ content: `Note: ${cleanNote}`, colSpan: 4, styles: { fontStyle: noteStyle, fontSize: 8, textColor: [100, 100, 100] } }]);
+                        addNoteRows(test.notes, false);
                     }
 
                     // Clinical Notes (Template)
                     if (showNotes) {
                         const template = getTestTemplate(section.section_name, test.test_name);
                         if (template?.clinicalNote) {
-                            const cleanClinicalNote = template.clinicalNote.replace(/\*\*/g, '');
-                            const isClinicalBold = template.clinicalNote.trim().startsWith('**') && template.clinicalNote.trim().endsWith('**');
-                            const clinicalNoteStyle = isClinicalBold ? 'bolditalic' : 'italic';
-
-                            tableBody.push([{ content: `Note: ${cleanClinicalNote}`, colSpan: 4, styles: { fontStyle: clinicalNoteStyle, fontSize: 8, textColor: [100, 100, 100], fillColor: [245, 245, 245] } }]);
+                            addNoteRows(template.clinicalNote, true);
                         }
                     }
                 });
