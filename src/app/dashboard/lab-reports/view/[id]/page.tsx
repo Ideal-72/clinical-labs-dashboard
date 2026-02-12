@@ -434,9 +434,9 @@ export default function ViewLabReportPage() {
                 theme: 'plain',
                 styles: { fontSize: 9, cellPadding: 1, overflow: 'visible' },
                 columnStyles: {
-                    0: { cellWidth: pageWidth / 3 - 10 },
-                    1: { cellWidth: pageWidth / 3 - 10 },
-                    2: { cellWidth: pageWidth / 3 - 10 }
+                    0: { cellWidth: pageWidth * 0.45 },
+                    1: { cellWidth: pageWidth * 0.25 },
+                    2: { cellWidth: pageWidth * 0.30 - (margin * 2) } // Adjust for margins
                 },
                 margin: { left: margin, right: margin }
             });
