@@ -369,6 +369,8 @@ export default function ViewLabReportPage() {
             };
 
             // 1. Header Images (if enabled)
+            let headerBottomY = 50; // Default if no header
+
             if (showHeader) {
                 try {
                     // Try loading all header images
@@ -380,19 +382,31 @@ export default function ViewLabReportPage() {
 
                     if (pclLogo) doc.addImage(pclLogo, 'PNG', 10, 10, 25, 25);
                     if (microscope) doc.addImage(microscope, 'PNG', pageWidth - 35, 10, 25, 25);
+
                     if (headerText) {
                         const aspect = headerText.width / headerText.height;
                         const w = 80;
                         const h = w / aspect;
                         doc.addImage(headerText, 'PNG', (pageWidth / 2) - (w / 2), 15, w, h);
+
+                        // Dynamically update space based on image height
+                        // Image starts at Y=15. Height is h. Add padding 10.
+                        let requiredHeight = 15 + h + 10;
+                        if (requiredHeight < 50) requiredHeight = 50; // Minimum 50
+
+                        currentY = requiredHeight;
+                        headerBottomY = requiredHeight;
+                    } else {
+                        currentY += 35;
                     }
-                    currentY += 35;
                 } catch (e) {
                     console.error("Error loading header images", e);
+                    currentY += 35;
                 }
             } else {
                 // If no header, leave some space for pre-printed letterhead
                 currentY += 35;
+                headerBottomY = 50;
             }
 
             // 2. Patient Info Header
@@ -549,7 +563,7 @@ export default function ViewLabReportPage() {
                     3: { cellWidth: '30%' }
                 },
                 rowPageBreak: 'avoid', // IMPORTANT: Avoid splitting rows
-                margin: { top: 50, bottom: 40, left: margin, right: margin }, // Top margin for header space on every page
+                margin: { top: headerBottomY, bottom: 40, left: margin, right: margin }, // Top margin for header space on every page
                 didDrawCell: (data) => {
                     const cellRaw = data.cell.raw as any;
                     if (data.section === 'body' && cellRaw && cellRaw.indicator) {
