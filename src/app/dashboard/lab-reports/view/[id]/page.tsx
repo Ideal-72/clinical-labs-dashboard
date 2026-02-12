@@ -410,6 +410,25 @@ export default function ViewLabReportPage() {
             }
 
             // 2. Patient Info Header
+
+            // Calculate dynamic width for Patient Name column
+            doc.setFontSize(9); // Matches table font size
+            doc.setFont("helvetica", "bold");
+            const patientNameText = `Patient Name: ${report.patient_name}`;
+            const patientNameWidth = doc.getTextWidth(patientNameText) + 10; // Add 10mm padding
+
+            // Constrain width
+            let col0Width = patientNameWidth;
+            const minCol0 = pageWidth * 0.30;
+            const maxCol0 = pageWidth * 0.60;
+
+            if (col0Width < minCol0) col0Width = minCol0;
+            if (col0Width > maxCol0) col0Width = maxCol0;
+
+            const remainingWidth = pageWidth - (margin * 2) - col0Width;
+            const col1Width = remainingWidth * 0.45; // 45% of remaining for Age/Sex
+            const col2Width = remainingWidth * 0.55; // 55% of remaining for Branch/Ref
+
             // We use autoTable for layout, but invisible borders
             autoTable(doc, {
                 startY: currentY,
@@ -434,9 +453,9 @@ export default function ViewLabReportPage() {
                 theme: 'plain',
                 styles: { fontSize: 9, cellPadding: 1, overflow: 'visible' },
                 columnStyles: {
-                    0: { cellWidth: pageWidth * 0.45 },
-                    1: { cellWidth: pageWidth * 0.25 },
-                    2: { cellWidth: pageWidth * 0.30 - (margin * 2) } // Adjust for margins
+                    0: { cellWidth: col0Width },
+                    1: { cellWidth: col1Width },
+                    2: { cellWidth: col2Width }
                 },
                 margin: { left: margin, right: margin }
             });
