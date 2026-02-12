@@ -354,7 +354,7 @@ export default function ViewLabReportPage() {
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.width;
             const pageHeight = doc.internal.pageSize.height;
-            const margin = 15;
+            const margin = 25;
             let currentY = margin;
 
             // Helper to load image
