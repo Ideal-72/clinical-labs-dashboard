@@ -499,7 +499,17 @@ export default function ViewLabReportPage() {
                     const tResult = t.result ? t.result.trim() : '';
                     return tName === 'induration' && tResult.length > 0;
                 });
-                const isMantouxValid = hasDuration && hasInduration;
+                const hasHBsAg = section.tests.some(t => {
+                    const tName = t.test_name ? t.test_name.trim().toLowerCase() : '';
+                    const tResult = t.result ? t.result.trim() : '';
+                    return tName === 'hbs ag' && tResult.length > 0;
+                });
+                const hasHCV = section.tests.some(t => {
+                    const tName = t.test_name ? t.test_name.trim().toLowerCase() : '';
+                    const tResult = t.result ? t.result.trim() : '';
+                    return tName === 'hcv' && tResult.length > 0;
+                });
+                const isHepatitisPanelValid = hasHBsAg || hasHCV;
 
                 section.tests.forEach(test => {
                     // 1. GLOBAL FILTER: Check Tuberculin Visibility First
@@ -508,6 +518,12 @@ export default function ViewLabReportPage() {
                     const isTuberculinHeader = normalizedTestName === 'tuberculin skin (mantoux) test' || normalizedTestName.includes('mantoux');
 
                     if ((isTuberculinDose || isTuberculinHeader) && !isMantouxValid) {
+                        return; // Skip rendering entirely
+                    }
+
+                    // 2. GLOBAL FILTER: Check Hepatitis Panel Visibility
+                    const isHepatitisPanelHeader = normalizedTestName === 'hepatitis panel';
+                    if (isHepatitisPanelHeader && !isHepatitisPanelValid) {
                         return; // Skip rendering entirely
                     }
 
