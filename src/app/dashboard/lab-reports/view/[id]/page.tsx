@@ -168,6 +168,36 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
         // For Mantoux, usually only Positive is highlighted.
     }
 
+    // Handle Explicit "Normal", "Desirable", "Optimal" ranges
+    if (/Normal|Desirable|Optimal|Healthy/i.test(rangeStr)) {
+        const lines = rangeStr.split(/[\n,;]/);
+        for (const line of lines) {
+            const cleanLine = line.trim();
+            if (/Normal|Desirable|Optimal|Healthy/i.test(cleanLine)) {
+                // Check "< max" e.g. "Desirable: <200"
+                if (cleanLine.includes('<') || cleanLine.toLowerCase().includes('less than')) {
+                    const maxMatch = cleanLine.replace(/<|less\s*than/i, '').match(/(\d+(\.\d+)?)/);
+                    if (maxMatch) {
+                        const max = parseFloat(maxMatch[0]);
+                        if (result < max) {
+                            return { isAbnormal: false, direction: 'normal' };
+                        }
+                    }
+                }
+
+                // Check "min - max" e.g. "Normal: 70-110"
+                const rangeMatch = cleanLine.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+                if (rangeMatch) {
+                    const min = parseFloat(rangeMatch[1]);
+                    const max = parseFloat(rangeMatch[2]);
+                    if (result >= min && result <= max) {
+                        return { isAbnormal: false, direction: 'normal' };
+                    }
+                }
+            }
+        }
+    }
+
     // Handle Explicit "Low", "High", "Very High" labelled ranges (e.g. Triglycerides)
     // "Normal: <161\nHigh:161-199\nHypertriclyceridemic:200-499\nVery High : >499"
     if (/High|Low|Critical|Abnormal/i.test(rangeStr)) {
