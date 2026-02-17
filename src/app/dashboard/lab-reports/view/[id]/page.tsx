@@ -529,6 +529,8 @@ export default function ViewLabReportPage() {
                     const tResult = t.result ? t.result.trim() : '';
                     return tName === 'induration' && tResult.length > 0;
                 });
+                const isMantouxValid = hasDuration || hasInduration;
+
                 const hasHBsAg = section.tests.some(t => {
                     const tName = t.test_name ? t.test_name.trim().toLowerCase() : '';
                     const tResult = t.result ? t.result.trim() : '';
