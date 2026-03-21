@@ -1000,31 +1000,31 @@ export default function ViewLabReportPage() {
 
             return (
                 <React.Fragment key={test.id}>
-                    {showUrineHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Urine complete analysis</td></tr>}
-                    {showMantouxHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Tuberculin skin (Mantoux) Test</td></tr>}
+                    {showUrineHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Urine complete analysis</td></tr>}
+                    {showMantouxHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Tuberculin skin (Mantoux) Test</td></tr>}
 
 
-                    {showLipidProfileHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">LIPID PROFILE</td></tr>}
-                    {showRFTHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">RENAL FUNCTION TEST</td></tr>}
-                    {showDiabeticScreeningHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">DIABETIC SCREENING</td></tr>}
-                    {showHbA1cHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">HbA1c</td></tr>}
-                    {showCardiacTroponin2Header && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Cardiac Troponin</td></tr>}
-                    {showElectrolytesHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">ELECTROLYTES</td></tr>}
-                    {showMalariaHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Malaria Panel</td></tr>}
-                    {showWidalHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">WIDAL-SLIDE METHOD</td></tr>}
-                    {showVDRLHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">VDRL</td></tr>}
-                    {showDenguePanelHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Dengue Panel</td></tr>}
+                    {showLipidProfileHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">LIPID PROFILE</td></tr>}
+                    {showRFTHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">RENAL FUNCTION TEST</td></tr>}
+                    {showDiabeticScreeningHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">DIABETIC SCREENING</td></tr>}
+                    {showHbA1cHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">HbA1c</td></tr>}
+                    {showCardiacTroponin2Header && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Cardiac Troponin</td></tr>}
+                    {showElectrolytesHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">ELECTROLYTES</td></tr>}
+                    {showMalariaHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Malaria Panel</td></tr>}
+                    {showWidalHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">WIDAL-SLIDE METHOD</td></tr>}
+                    {showVDRLHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">VDRL</td></tr>}
+                    {showDenguePanelHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Dengue Panel</td></tr>}
 
                     <tr className="border-b border-gray-200 hover:bg-gray-50">
                         <td className="p-2 print:p-1 align-top border-r border-gray-300">
                             <div className="font-medium text-black">{test.test_name}</div>
                             {test.specimen && <div className="text-xs text-gray-600 mt-0.5">{test.specimen}</div>}
                         </td>
-                        <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity || isPositiveOrReactive ? 'font-bold' : 'font-normal'}`}>
+                        <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity || isPositiveOrReactive ? 'font-extrabold print:font-black' : 'font-normal'}`}>
                             <div className="flex items-center justify-center h-full relative w-full gap-1">
                                 <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}`.toUpperCase() : test.result?.toUpperCase()}</span>
                                 {analysis.isAbnormal && (
-                                    <span className="text-xs font-bold absolute right-0 top-1/2 -translate-y-1/2 print:static print:translate-y-0 print:ml-1 flex items-center">
+                                    <span className="text-xs font-extrabold print:font-black absolute right-0 top-1/2 -translate-y-1/2 print:static print:translate-y-0 print:ml-1 flex items-center">
                                         {analysis.direction === 'high' ? (
                                             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-900" aria-hidden="true"><path d="M12 4l-8 8h16l-8-8z" /></svg> // Simple Triangle Up
                                         ) : (
@@ -1185,18 +1185,18 @@ export default function ViewLabReportPage() {
                                                         <thead>
                                                             <tr className="hidden print:table-row h-6 bg-white"><th colSpan={4} className="bg-white" style={{ borderLeft: 'hidden', borderRight: 'hidden', borderTop: 'hidden' }}></th></tr>
                                                             <tr className="bg-gray-100 print:bg-gray-50 border-y border-gray-400">
-                                                                <th className="p-2 print:p-1 text-left w-[40%] font-bold text-black border-r border-gray-300">Test Name / Specimen</th>
-                                                                <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Result</th>
-                                                                <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Units</th>
-                                                                <th className="p-2 print:p-1 text-left w-[30%] font-bold text-black">Reference Range / Method</th>
+                                                                <th className="p-2 print:p-1 text-left w-[40%] font-extrabold print:font-black text-black border-r border-gray-300">Test Name / Specimen</th>
+                                                                <th className="p-2 print:p-1 text-center w-[15%] font-extrabold print:font-black text-black border-r border-gray-300">Result</th>
+                                                                <th className="p-2 print:p-1 text-center w-[15%] font-extrabold print:font-black text-black border-r border-gray-300">Units</th>
+                                                                <th className="p-2 print:p-1 text-left w-[30%] font-extrabold print:font-black text-black">Reference Range / Method</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-bold text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{(() => { const name = section.section_name; const len = name.length; if (len > 0 && len % 2 === 0) { const half = len / 2; const first = name.substring(0, half); const second = name.substring(half); if (first.toLowerCase() === second.toLowerCase()) return first; } return name; })()}</td></tr>
+                                                            <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{(() => { const name = section.section_name; const len = name.length; if (len > 0 && len % 2 === 0) { const half = len / 2; const first = name.substring(0, half); const second = name.substring(half); if (first.toLowerCase() === second.toLowerCase()) return first; } return name; })()}</td></tr>
                                                             {renderTestRows(mainTests, section.tests, section.section_name, 0)}
 
                                                             {mainTests.length === 0 && (
-                                                                <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-bold text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{section.section_name}</td></tr>
+                                                                <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{section.section_name}</td></tr>
                                                             )}
                                                         </tbody>
                                                     </table>
@@ -1213,10 +1213,10 @@ export default function ViewLabReportPage() {
                                                             {mainTests.length === 0 ? (
                                                                 <thead>
                                                                     <tr className="bg-gray-100 print:bg-gray-50 border-y border-gray-400">
-                                                                        <th className="p-2 print:p-1 text-left w-[40%] font-bold text-black border-r border-gray-300">Test Name / Specimen</th>
-                                                                        <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Result</th>
-                                                                        <th className="p-2 print:p-1 text-center w-[15%] font-bold text-black border-r border-gray-300">Units</th>
-                                                                        <th className="p-2 print:p-1 text-left w-[30%] font-bold text-black">Reference Range / Method</th>
+                                                                        <th className="p-2 print:p-1 text-left w-[40%] font-extrabold print:font-black text-black border-r border-gray-300">Test Name / Specimen</th>
+                                                                        <th className="p-2 print:p-1 text-center w-[15%] font-extrabold print:font-black text-black border-r border-gray-300">Result</th>
+                                                                        <th className="p-2 print:p-1 text-center w-[15%] font-extrabold print:font-black text-black border-r border-gray-300">Units</th>
+                                                                        <th className="p-2 print:p-1 text-left w-[30%] font-extrabold print:font-black text-black">Reference Range / Method</th>
                                                                     </tr>
                                                                 </thead>
                                                             ) : (
@@ -1232,7 +1232,7 @@ export default function ViewLabReportPage() {
                                                             <tbody>
                                                                 {/* Only render header if main table was empty (unlikely, but safe) */}
                                                                 {mainTests.length === 0 && (
-                                                                    <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-bold text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{section.section_name}</td></tr>
+                                                                    <tr className="border-b border-gray-400 section-header-row"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-center text-black bg-gray-50 print:bg-transparent uppercase tracking-wider">{section.section_name}</td></tr>
                                                                 )}
                                                                 {renderTestRows(stickyTests, section.tests, section.section_name, splitIndex)}
                                                             </tbody>
