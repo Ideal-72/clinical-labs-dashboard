@@ -93,7 +93,6 @@ export const testTemplates: TestTemplates = {
             referenceRange: "Healthy Adult or children : 70 - 110",
             specimen: "SERUM",
             method: "Enzymatic: Trinder's Method",
-            clinicalNote: "Fasting blood glucose measures blood sugar levels after an overnight fast. Elevated levels (>126 mg/dL) may indicate diabetes mellitus. Levels between 100-125 mg/dL suggest prediabetes. Low levels (<70 mg/dL) indicate hypoglycemia, which may cause dizziness, sweating, and confusion. **Consistent monitoring is important for diabetes management.**"
         },
         "GCT (75 GMS)": {
             units: "mg/dL",
@@ -106,14 +105,12 @@ export const testTemplates: TestTemplates = {
             referenceRange: "70-140",
             specimen: "Serum/Plasma",
             method: "Enzymatic: Trinder's Method",
-            clinicalNote: "Random blood glucose can be taken at any time without fasting. Levels ≥200 mg/dL with symptoms of diabetes (increased thirst, frequent urination, fatigue) confirm diabetes diagnosis. **This test is useful for quick screening and monitoring.**"
         },
         "Glucose Post Prandial": {
             units: "mg/dL",
             referenceRange: "70-160",
             specimen: "Serum/Plasma",
             method: "Enzymatic: Trinder's Method",
-            clinicalNote: "Post-prandial (PP) glucose is measured 2 hours after a meal. It assesses the body's ability to process glucose. Levels >200 mg/dL indicate diabetes. Levels between 140-199 mg/dL suggest impaired glucose tolerance. **This test is important for monitoring diabetes control and treatment effectiveness.**"
         },
         "HbA1c": {
             type: 'group_header',
@@ -133,7 +130,6 @@ export const testTemplates: TestTemplates = {
             referenceRange: "",
             specimen: "EDTA BLOOD",
             method: "",
-            clinicalNote: "HbA1c (Glycated Hemoglobin) reflects average blood sugar levels over the past 2-3 months. Values <5.7% are normal, 5.7-6.4% indicate prediabetes, and ≥6.5% confirm diabetes. It's the gold standard for long-term diabetes monitoring and helps assess treatment effectiveness. **Unlike daily glucose tests, HbA1c is not affected by recent meals or stress.**"
         },
         "LFT (Liver Function Test)": {
             type: 'group_header',
