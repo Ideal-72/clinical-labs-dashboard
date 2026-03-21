@@ -644,7 +644,13 @@ export default function ViewLabReportPage() {
                     }
 
                     // Clinical Notes (Template)
-                    if (showNotes) {
+                    const alwaysShowNotesTests = [
+                        'crp', 'hbs ag', 'hbsag', 'dengue', 'aso', 'hcv', 'vdrl', 'hiv', 'widal', 'pregnancy', 'troponin'
+                    ];
+                    const testNameLower = (test.test_name || '').toLowerCase().trim();
+                    const isMandatoryNote = alwaysShowNotesTests.some(t => testNameLower.includes(t));
+
+                    if (showNotes || isMandatoryNote) {
                         const template = getTestTemplate(section.section_name, test.test_name);
                         if (template?.clinicalNote) {
                             addNoteRows(template.clinicalNote, true);
