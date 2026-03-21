@@ -711,10 +711,9 @@ export default function ViewLabReportPage() {
                         const alignOpt: any = { align: halign === 'center' ? 'center' : 'left', baseline: 'middle' };
                         const xPos = halign === 'center' ? cell.x + cell.width / 2 : x;
 
-                        // Re-draw text 0.08pt offset to simulate slight extrabold
+                        // Re-draw text at exactly position to reinforce bold without faux offset
                         textLines.forEach((line: string, i: number) => {
                             const lineY = y + i * (cell.styles.fontSize ?? 9) * 0.352;
-                            doc.text(line, xPos + 0.04, lineY, alignOpt);
                             doc.text(line, xPos, lineY, alignOpt);
                         });
                     }
