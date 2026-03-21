@@ -65,7 +65,7 @@ export default function PatientsPage() {
     doctorName: ''
   });
 
-  const PREFIXES = ['Mr.', 'Mrs.', 'Ms.', 'Miss', 'Master', 'Dr.'];
+  const PREFIXES = ['Mr.', 'Mrs.', 'Ms.', 'Miss', 'Master', 'Baby', 'Dr.'];
   const [loading, setLoading] = useState(false);
 
   // Doctor suggestions state
