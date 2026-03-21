@@ -170,8 +170,8 @@ export const useReportForm = (doctorId?: string | number | null) => {
             const prefixRegex = new RegExp(`^(${PREFIXES.map(p => p.replace('.', '\\.')).join('|')})\\s*`, 'i');
             const hasPrefix = prefixRegex.test(name);
 
-            // Remove old prefix
-            name = name.replace(prefixRegex, '');
+            // If the name already has a valid prefix, DO NOT overwrite it.
+            if (hasPrefix) return prev;
 
             if (!name.trim()) return prev;
 
@@ -179,9 +179,10 @@ export const useReportForm = (doctorId?: string | number | null) => {
             if (prev.sex === 'Male') newPrefix = 'Mr.';
             else if (prev.sex === 'Female') newPrefix = 'Mrs.';
 
-            // Only auto-switch if it was already prefixed or we want to enforce it.
-            // Let's enforce it to keep it helpful, but allow manual override later/on-blur if needed.
-            return { ...prev, patientName: `${newPrefix} ${name}` };
+            if (newPrefix) {
+                 return { ...prev, patientName: `${newPrefix} ${name}` };
+            }
+            return prev;
         });
 
     }, [patientDetails.sex]);
