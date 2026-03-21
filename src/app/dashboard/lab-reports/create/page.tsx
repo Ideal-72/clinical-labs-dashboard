@@ -180,80 +180,51 @@ export default function CreateLabReportPage() {
                                 <label className="block text-sm font-medium text-foreground mb-1">
                                     Patient Name *
                                 </label>
-                                <div className="flex gap-2">
-                                    <div className="w-24 flex-shrink-0">
-                                        <select
-                                            className="w-full px-2 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-                                            value={PREFIXES.find(p => patientDetails.patientName.startsWith(p + ' ')) || ''}
-                                            onChange={(e) => {
-                                                const newPrefix = e.target.value;
-                                                // Remove all potential prefixes first
-                                                let name = patientDetails.patientName;
-                                                const prefixRegex = new RegExp(`^(${PREFIXES.map(p => p.replace('.', '\\.')).join('|')})\\s*`, 'i');
-                                                name = name.replace(prefixRegex, '');
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        required
+                                        value={patientDetails.patientName}
+                                        onChange={(e) => {
+                                            const fullName = e.target.value;
 
-                                                // Add new prefix if selected
-                                                if (newPrefix) {
-                                                    name = `${newPrefix} ${name}`;
-                                                }
-                                                setPatientDetails(prev => ({ ...prev, patientName: name }));
-                                            }}
-                                        >
-                                            <option value="">Prefix</option>
-                                            {PREFIXES.map(prefix => (
-                                                <option key={prefix} value={prefix}>{prefix}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="relative flex-1">
-                                        <input
-                                            type="text"
-                                            required
-                                            value={patientDetails.patientName.replace(new RegExp(`^(${PREFIXES.map(p => p.replace('.', '\\.')).join('|')})\\s*`, 'i'), '')}
-                                            onChange={(e) => {
-                                                const rawName = e.target.value;
-                                                // Preserve existing prefix
-                                                const currentPrefix = PREFIXES.find(p => patientDetails.patientName.startsWith(p + ' ')) || '';
-                                                const fullName = currentPrefix ? `${currentPrefix} ${rawName}` : rawName;
+                                            setPatientDetails({ ...patientDetails, patientName: fullName });
 
-                                                setPatientDetails({ ...patientDetails, patientName: fullName });
-
-                                                if (rawName.trim()) {
-                                                    const filtered = existingPatients.filter(p =>
-                                                        p.name.toLowerCase().includes(rawName.toLowerCase())
-                                                    );
-                                                    setFilteredSuggestions(filtered);
-                                                    setShowSuggestions(filtered.length > 0);
-                                                } else {
-                                                    setShowSuggestions(false);
-                                                }
-                                            }}
-                                            onBlur={() => {
-                                                setTimeout(() => setShowSuggestions(false), 200);
-                                                if (patientDetails.patientName && !patientDetails.sidNo) {
-                                                    fetchNextSid();
-                                                }
-                                            }}
-                                            className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                                            placeholder="Enter patient name"
-                                        />
-                                        {showSuggestions && (
-                                            <div className="absolute z-10 w-full bg-background border border-border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
-                                                {filteredSuggestions.map(patient => (
-                                                    <div
-                                                        key={patient.id}
-                                                        onClick={() => handlePatientSelect(patient)}
-                                                        className="px-3 py-2 hover:bg-secondary cursor-pointer border-b border-border last:border-b-0"
-                                                    >
-                                                        <div className="font-medium text-foreground">{patient.name}</div>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            ID: {patient.opno} | Age: {patient.age} | {patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other'}
-                                                        </div>
+                                            if (fullName.trim()) {
+                                                const filtered = existingPatients.filter(p =>
+                                                    p.name.toLowerCase().includes(fullName.trim().toLowerCase())
+                                                );
+                                                setFilteredSuggestions(filtered);
+                                                setShowSuggestions(filtered.length > 0);
+                                            } else {
+                                                setShowSuggestions(false);
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            setTimeout(() => setShowSuggestions(false), 200);
+                                            if (patientDetails.patientName && !patientDetails.sidNo) {
+                                                fetchNextSid();
+                                            }
+                                        }}
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="Enter patient name"
+                                    />
+                                    {showSuggestions && (
+                                        <div className="absolute z-10 w-full bg-background border border-border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                                            {filteredSuggestions.map(patient => (
+                                                <div
+                                                    key={patient.id}
+                                                    onClick={() => handlePatientSelect(patient)}
+                                                    className="px-3 py-2 hover:bg-secondary cursor-pointer border-b border-border last:border-b-0"
+                                                >
+                                                    <div className="font-medium text-foreground">{patient.name}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        ID: {patient.opno} | Age: {patient.age} | {patient.gender === 'M' ? 'Male' : patient.gender === 'F' ? 'Female' : 'Other'}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
