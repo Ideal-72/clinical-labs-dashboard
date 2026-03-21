@@ -573,7 +573,12 @@ export default function ViewLabReportPage() {
                     }
 
                     const analysis = analyzeResult(cleanResult, test.reference_range, report.sex, report.age, test.test_name);
-                    const isPositiveOrReactive = cleanResult && (cleanResult.toUpperCase().trim() === 'POSITIVE' || cleanResult.toUpperCase().trim() === 'REACTIVE');
+                    const isBloodGroup = test.test_name && (test.test_name.toUpperCase().includes('BLOOD GROUPING') || test.test_name.toUpperCase().includes('RH - TYPING'));
+                    const isPositiveOrReactive = !isBloodGroup && cleanResult && ( 
+                        cleanResult.toUpperCase().includes('POSITIVE') || 
+                        cleanResult.toUpperCase().includes('POSTIVE') || 
+                        cleanResult.toUpperCase().includes('REACTIVE') 
+                    );
                     const isBold = analysis.isAbnormal || isPositiveOrReactive;
 
                     // Row Type Note
@@ -980,7 +985,12 @@ export default function ViewLabReportPage() {
 
             const isSpGravity = test.test_name.toUpperCase().includes('SP.GRAVITY') || test.test_name.toUpperCase().includes('SPECIFIC GRAVITY');
 
-            const isPositiveOrReactive = test.result && (test.result.toUpperCase().trim() === 'POSITIVE' || test.result.toUpperCase().trim() === 'REACTIVE');
+            const isBloodGroup = test.test_name && (test.test_name.toUpperCase().includes('BLOOD GROUPING') || test.test_name.toUpperCase().includes('RH - TYPING'));
+            const isPositiveOrReactive = !isBloodGroup && test.result && (
+                test.result.toUpperCase().includes('POSITIVE') || 
+                test.result.toUpperCase().includes('POSTIVE') || 
+                test.result.toUpperCase().includes('REACTIVE')
+            );
 
             let isHbA1cBold = false;
             if (test.test_name === 'Glycosylated Haemoglobin (HbA1c)' && test.result) {
