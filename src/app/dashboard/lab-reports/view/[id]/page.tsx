@@ -47,11 +47,11 @@ interface Report {
     comments?: string;
 }
 
-const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string, patientAge?: number) => {
+const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string, patientAge?: number, testName?: string) => {
     if (!resultStr || !rangeStr) return { isAbnormal: false, direction: 'normal' };
 
     // Ignore Widal / Serology Dilution results (e.g. "POSITIVE 1:80 DILUTION")
-    if (resultStr.toUpperCase().includes('DILUTION') || resultStr.includes('1:')) {
+    if ((testName && testName.toUpperCase().includes('SALMONELLA')) || resultStr.toUpperCase().includes('DILUTION') || resultStr.includes('1:')) {
         return { isAbnormal: false, direction: 'normal' };
     }
 
@@ -572,7 +572,7 @@ export default function ViewLabReportPage() {
                         }
                     }
 
-                    const analysis = analyzeResult(cleanResult, test.reference_range, report.sex, report.age);
+                    const analysis = analyzeResult(cleanResult, test.reference_range, report.sex, report.age, test.test_name);
                     const isBold = analysis.isAbnormal;
 
                     // Row Type Note
@@ -931,7 +931,7 @@ export default function ViewLabReportPage() {
                 );
             }
 
-            const analysis = analyzeResult(test.result, test.reference_range, report.sex, report.age);
+            const analysis = analyzeResult(test.result, test.reference_range, report.sex, report.age, test.test_name);
             const template = getTestTemplate(sectionName, test.test_name);
 
             // Helper to check if a header already exists as a physical row
