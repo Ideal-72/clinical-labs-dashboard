@@ -66,7 +66,14 @@ export const testTemplates: TestTemplates = {
         },
         "MP - CARD METHOD": { units: "", referenceRange: "Qualitative Detection", specimen: "Whole Blood", method: "Sandwich Immunoassay" },
         "MF - CARD METHOD": { units: "", referenceRange: "Qualitative Detection", specimen: "Whole Blood", method: "Sandwich Immunoassay" },
-        "BLOOD GROUPING": { units: "", referenceRange: "", specimen: "Blood", method: "Slide Agglutination" },
+        "BLOOD GROUPING PANEL": {
+            type: 'group_header',
+            units: "",
+            referenceRange: "",
+            specimen: "",
+            method: ""
+        },
+        "Blood Grouping": { units: "", referenceRange: "", specimen: "Blood", method: "Slide Agglutination" },
         "RH - TYPING": { units: "", referenceRange: "Qualitative Detection", specimen: "Blood", method: "Slide Agglutination" },
         "CROSS MATCHING TEST": { units: "", referenceRange: "Compatible", specimen: "Blood", method: "Agglutination" },
     },
