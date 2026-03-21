@@ -573,7 +573,8 @@ export default function ViewLabReportPage() {
                     }
 
                     const analysis = analyzeResult(cleanResult, test.reference_range, report.sex, report.age, test.test_name);
-                    const isBold = analysis.isAbnormal;
+                    const isPositiveOrReactive = cleanResult && (cleanResult.toUpperCase().trim() === 'POSITIVE' || cleanResult.toUpperCase().trim() === 'REACTIVE');
+                    const isBold = analysis.isAbnormal || isPositiveOrReactive;
 
                     // Row Type Note
                     if (test.row_type === 'note') {
@@ -979,6 +980,8 @@ export default function ViewLabReportPage() {
 
             const isSpGravity = test.test_name.toUpperCase().includes('SP.GRAVITY') || test.test_name.toUpperCase().includes('SPECIFIC GRAVITY');
 
+            const isPositiveOrReactive = test.result && (test.result.toUpperCase().trim() === 'POSITIVE' || test.result.toUpperCase().trim() === 'REACTIVE');
+
             let isHbA1cBold = false;
             if (test.test_name === 'Glycosylated Haemoglobin (HbA1c)' && test.result) {
                 const val = parseFloat(test.result);
@@ -1007,7 +1010,7 @@ export default function ViewLabReportPage() {
                             <div className="font-medium text-black">{test.test_name}</div>
                             {test.specimen && <div className="text-xs text-gray-600 mt-0.5">{test.specimen}</div>}
                         </td>
-                        <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity ? 'font-bold' : 'font-normal'}`}>
+                        <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity || isPositiveOrReactive ? 'font-bold' : 'font-normal'}`}>
                             <div className="flex items-center justify-center h-full relative w-full gap-1">
                                 <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}` : test.result}</span>
                                 {analysis.isAbnormal && (
