@@ -515,7 +515,8 @@ export default function ViewLabReportPage() {
                 tableBody.push([{
                     content: section.section_name || 'SECTION',
                     colSpan: 4,
-                    styles: { fillColor: [240, 240, 240], fontStyle: 'bold', halign: 'center' }
+                    styles: { fillColor: [240, 240, 240], fontStyle: 'bold', halign: 'center' },
+                    fauxBold: true
                 }]);
 
                 // Calculate Mantoux Validity for this section
@@ -583,7 +584,13 @@ export default function ViewLabReportPage() {
 
                     // Row Type Note
                     if (test.row_type === 'note') {
-                        tableBody.push([{ content: test.test_name, colSpan: 4, styles: { fontStyle: 'bold', halign: 'left' } }]);
+                        tableBody.push([{ content: test.test_name, colSpan: 4, styles: { fontStyle: 'bold', halign: 'left' }, fauxBold: true }]);
+                        return;
+                    }
+
+                    // Group header (e.g. Malaria Panel, Dengue Panel)
+                    if (test.row_type === 'group_header' || (test as any).type === 'group_header') {
+                        tableBody.push([{ content: test.test_name, colSpan: 4, styles: { fontStyle: 'bold', halign: 'left' }, fauxBold: true }]);
                         return;
                     }
 
@@ -688,6 +695,30 @@ export default function ViewLabReportPage() {
                 margin: { top: headerBottomY, bottom: 40, left: margin, right: margin }, // Top margin for header space on every page
                 didDrawCell: (data) => {
                     const cellRaw = data.cell.raw as any;
+
+                    // Faux-bold: re-draw text slightly offset to thicken heading text
+                    if (data.section === 'body' && cellRaw && cellRaw.fauxBold && data.cell.text?.length) {
+                        const cell = data.cell;
+                        const textLines = cell.text;
+                        const x = cell.textPos?.x ?? (cell.x + cell.padding('left'));
+                        let y = cell.textPos?.y ?? (cell.y + cell.height / 2);
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(cell.styles.fontSize ?? 9);
+                        doc.setTextColor(0, 0, 0);
+
+                        const halign = (cell.styles.halign || 'left') as string;
+                        const alignOpt: any = { align: halign === 'center' ? 'center' : 'left', baseline: 'middle' };
+                        const xPos = halign === 'center' ? cell.x + cell.width / 2 : x;
+
+                        // Re-draw text 0.15pt offset to simulate extrabold
+                        textLines.forEach((line: string, i: number) => {
+                            const lineY = y + i * (cell.styles.fontSize ?? 9) * 0.352;
+                            doc.text(line, xPos + 0.15, lineY, alignOpt);
+                            doc.text(line, xPos, lineY, alignOpt);
+                        });
+                    }
+
                     if (data.section === 'body' && cellRaw && cellRaw.indicator) {
                         const cell = data.cell;
                         const textWidth = cell.getTextPos().x - cell.x + doc.getTextWidth(cell.text[0] || '');
