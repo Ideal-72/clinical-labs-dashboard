@@ -714,7 +714,7 @@ export default function ViewLabReportPage() {
                         // Re-draw text 0.08pt offset to simulate slight extrabold
                         textLines.forEach((line: string, i: number) => {
                             const lineY = y + i * (cell.styles.fontSize ?? 9) * 0.352;
-                            doc.text(line, xPos + 0.08, lineY, alignOpt);
+                            doc.text(line, xPos + 0.04, lineY, alignOpt);
                             doc.text(line, xPos, lineY, alignOpt);
                         });
                     }
