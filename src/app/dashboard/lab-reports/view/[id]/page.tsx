@@ -960,10 +960,7 @@ export default function ViewLabReportPage() {
             const showLipidProfileHeader = test.test_name === 'Cholesterol,Total' && !hasGroupHeader('LIPID PROFILE');
             const showRFTHeader = test.test_name === 'Blood Urea' && !hasGroupHeader('RENAL FUNCTION TEST');
 
-            const boneHealthTests = ['Calcium', 'Phosphorous'];
-            const showBoneHealthHeader = boneHealthTests.includes(test.test_name) &&
-                !boneHealthTests.includes(prevTest?.test_name || '') &&
-                !hasGroupHeader('Bone Health');
+
 
             const showVDRLHeader = test.test_name === 'Syphilis Antibody' && !hasGroupHeader('VDRL');
             const showCardiacTroponin2Header = test.test_name === 'Troponin I' && !hasGroupHeader('Cardiac Troponin');
@@ -993,7 +990,7 @@ export default function ViewLabReportPage() {
                     {showUrineHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Urine complete analysis</td></tr>}
                     {showMantouxHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Tuberculin skin (Mantoux) Test</td></tr>}
 
-                    {showBoneHealthHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Bone Health</td></tr>}
+
                     {showLipidProfileHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">LIPID PROFILE</td></tr>}
                     {showRFTHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">RENAL FUNCTION TEST</td></tr>}
                     {showDiabeticScreeningHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">DIABETIC SCREENING</td></tr>}

@@ -163,15 +163,24 @@ export const testTemplates: TestTemplates = {
             method: "Immunochromatography Card",
             clinicalNote: "Pregnancy card test is a rapid, at-home diagnostic immunoassay used to detect the presence of the human Chorionic Gonadotropin (hCG) hormone in urine which indicates Pregnancy. This is only Screening test. **Suggest to do Beta HCG Quantitative methods for confirmation.**"
         },
-        "Bone Health": {
+        "Bone Health R": {
             type: 'group_header',
             units: "",
             referenceRange: "",
             specimen: "",
             method: ""
         },
-        "Calcium": { units: "mg/dL", referenceRange: "8.6-10.0", specimen: "Serum", method: "OCPC Method" },
-        "Phosphorous": { units: "mg/dL", referenceRange: "2.5-4.5", specimen: "Serum", method: "phosphomolybdate complex" },
+        "Calcium (R)": { units: "mg/dL", referenceRange: "8.4-11.5", specimen: "Serum", method: "Arsenazo III Method" },
+        "Phosphorous (R)": { units: "mg/dL", referenceRange: "4-7", specimen: "Serum", method: "Direct UV Method" },
+        "Bone Health B": {
+            type: 'group_header',
+            units: "",
+            referenceRange: "",
+            specimen: "",
+            method: ""
+        },
+        "Calcium (B)": { units: "mg/dL", referenceRange: "8.6-10.3", specimen: "Serum", method: "Endpoint : Arsenazo III" },
+        "Phosphorous (B)": { units: "mg/dL", referenceRange: "2.5 - 4.5", specimen: "Serum", method: "Phosphomdybdate Complex" },
         "LIPID PROFILE": {
             type: 'group_header',
             units: "",
