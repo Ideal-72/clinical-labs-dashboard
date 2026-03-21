@@ -149,6 +149,13 @@ export const testTemplates: TestTemplates = {
         "Albumin.": { units: "g/dL", referenceRange: "Adult-3.5-5.2", specimen: "Serum", method: "Colorimetric:BromocresolGreen" },
         "Globulin.": { units: "g/dL", referenceRange: "2.0-3.9", specimen: "Serum", method: "Calculated" },
         "Albumin/Globulin": { units: "Ratio", referenceRange: "", specimen: "Serum", method: "Calculated" },
+        "PREGNANCY PANEL": {
+            type: 'group_header',
+            units: "",
+            referenceRange: "",
+            specimen: "",
+            method: ""
+        },
         "PREGNANCY CARD TEST": {
             units: "",
             referenceRange: "Quantitative detection",
