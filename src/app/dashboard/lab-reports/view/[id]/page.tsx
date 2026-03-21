@@ -587,12 +587,12 @@ export default function ViewLabReportPage() {
                         return;
                     }
 
-                    let displayResult = cleanResult;
+                    let displayResult = cleanResult ? cleanResult.toUpperCase() : '';
                     let displayUnits = test.units || '';
 
                     // Special handling for TuberculinDose: Result = "0.1 ml of 1 TU PPD", Units = ""
                     if (test.test_name === 'TuberculinDose') {
-                        displayResult = `${cleanResult} ${test.units || ''}`.trim();
+                        displayResult = `${cleanResult} ${test.units || ''}`.trim().toUpperCase();
                         displayUnits = '';
                     }
 
@@ -1022,7 +1022,7 @@ export default function ViewLabReportPage() {
                         </td>
                         <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity || isPositiveOrReactive ? 'font-bold' : 'font-normal'}`}>
                             <div className="flex items-center justify-center h-full relative w-full gap-1">
-                                <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}` : test.result}</span>
+                                <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}`.toUpperCase() : test.result?.toUpperCase()}</span>
                                 {analysis.isAbnormal && (
                                     <span className="text-xs font-bold absolute right-0 top-1/2 -translate-y-1/2 print:static print:translate-y-0 print:ml-1 flex items-center">
                                         {analysis.direction === 'high' ? (
