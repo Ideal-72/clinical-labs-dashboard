@@ -695,9 +695,7 @@ export default function ViewLabReportPage() {
                         // Easier: Just put it to the right of the cell content, or fixed position?
                         // halign is center. 
 
-                        const centerX = cell.x + cell.width / 2;
-                        const textW = doc.getTextWidth(String(cell.text));
-                        const arrowX = centerX + textW / 2 + 2; // 2mm padding
+                        const arrowX = cell.x + cell.width - 4; // 4mm from the right edge of the cell
                         const arrowY = cell.y + cell.height / 2;
 
                         doc.setFillColor(0, 0, 0); // Black arrow
@@ -1024,7 +1022,7 @@ export default function ViewLabReportPage() {
                             <div className="flex items-center justify-center h-full relative w-full gap-1">
                                 <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}`.toUpperCase() : test.result?.toUpperCase()}</span>
                                 {analysis.isAbnormal && (
-                                    <span className="text-xs font-extrabold print:font-black absolute right-0 top-1/2 -translate-y-1/2 print:static print:translate-y-0 print:ml-1 flex items-center">
+                                    <span className="text-xs font-extrabold print:font-black absolute right-2 top-1/2 -translate-y-1/2 flex items-center print:right-2 print:-translate-y-1/2">
                                         {analysis.direction === 'high' ? (
                                             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-900" aria-hidden="true"><path d="M12 4l-8 8h16l-8-8z" /></svg> // Simple Triangle Up
                                         ) : (
