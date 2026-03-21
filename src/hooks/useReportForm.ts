@@ -93,7 +93,7 @@ export const useReportForm = (doctorId?: string | number | null) => {
         },
     ]);
 
-    const PREFIXES = ['Mr.', 'Mrs.', 'Ms.', 'Miss', 'Master', 'Baby', 'Dr.'];
+    const PREFIXES = ['Mr.', 'Mrs.', 'Ms.', 'Miss', 'Master', 'Baby', 'Mx.', 'Dr.'];
 
     // Handle Name Prefix Logic
     const handleNameChange = (name: string) => {
