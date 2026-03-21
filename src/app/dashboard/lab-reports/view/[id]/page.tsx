@@ -973,7 +973,7 @@ export default function ViewLabReportPage() {
                 !diabeticScreeningTests.includes(prevTest?.test_name || '') &&
                 !hasGroupHeader('DIABETIC SCREENING');
 
-            const showPregnancyHeader = test.test_name === 'PREGNANCY CARD TEST' && !hasGroupHeader('PREGNANCY TEST');
+
 
             const hba1cTests = ['Glycosylated Haemoglobin (HbA1c)', 'Estimated Average Glucose (eAG)'];
             const showHbA1cHeader = hba1cTests.includes(test.test_name) &&
@@ -992,7 +992,7 @@ export default function ViewLabReportPage() {
                 <React.Fragment key={test.id}>
                     {showUrineHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Urine complete analysis</td></tr>}
                     {showMantouxHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Tuberculin skin (Mantoux) Test</td></tr>}
-                    {showPregnancyHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">PREGNANCY TEST</td></tr>}
+
                     {showBoneHealthHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Bone Health</td></tr>}
                     {showLipidProfileHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">LIPID PROFILE</td></tr>}
                     {showRFTHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-bold text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">RENAL FUNCTION TEST</td></tr>}
