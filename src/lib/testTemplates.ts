@@ -123,7 +123,7 @@ export const testTemplates: TestTemplates = {
             units: "%",
             referenceRange: "Adult\nNormal : < 5.7%\nPrediabetic: 5.7-6.4%\nDiabetic : >= 6.5%\n\nA1CGoals\nReasonable Goal : <7%\nMorestringentgoal: <6.5%\nLessstringentgoal: <8.0%",
             specimen: "EDTA BLOOD",
-            method: "Sandwich immunodetection",
+            method: "Turbidimetric Assay [TINIA]",
         },
         "Estimated Average Glucose (eAG)": {
             units: "mg/dL",
