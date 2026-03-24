@@ -755,10 +755,11 @@ export default function ViewLabReportPage() {
             // --- Signature Block (End of Report) ---
             let sigY = (doc as any).lastAutoTable.finalY + (report.comments ? 25 : 15);
 
-            // Ensure space for signature
-            if (sigY > pageHeight - 40) {
+            // Ensure space for signature AND the 55mm physical footer margin
+            // The signature block needs ~40mm of vertical space. 55 + 40 = 95.
+            if (sigY > pageHeight - 95) {
                 doc.addPage();
-                sigY = 40;
+                sigY = headerBottomY; // Start below the physical header space on the new page
             }
 
             // Left Side: "Verified by" with Line Above
