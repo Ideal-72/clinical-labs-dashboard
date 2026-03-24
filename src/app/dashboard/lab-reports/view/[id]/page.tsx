@@ -1106,14 +1106,24 @@ export default function ViewLabReportPage() {
                             </td>
                         </tr>
                     )}
-                    {showNotes && template?.clinicalNote && (
-                        <tr key={`${test.id}-clinical-note`} className="notes-section-row">
-                            <td colSpan={4} className="border-b border-gray-300 p-2 text-[10px] text-black bg-gray-100/50">
-                                <span className="font-bold">Note: </span>
-                                <FormattedNote text={template.clinicalNote} />
-                            </td>
-                        </tr>
-                    )}
+                    {(() => {
+                        const mandatoryNoteTests = ['crp', 'hbs ag', 'hbsag', 'dengue', 'aso', 'hcv', 'vdrl', 'hiv', 'widal', 'pregnancy', 'troponin'];
+                        const testNameLow = (test.test_name || '').toLowerCase().trim();
+                        const isMandatory = mandatoryNoteTests.some(t => testNameLow.includes(t));
+                        const hasResult = test.result && test.result.trim() !== '';
+                        const shouldShowNote = showNotes || (isMandatory && hasResult);
+                        if (shouldShowNote && template?.clinicalNote) {
+                            return (
+                                <tr key={`${test.id}-clinical-note`} className="notes-section-row">
+                                    <td colSpan={4} className="border-b border-gray-300 p-2 text-[10px] text-black bg-gray-100/50">
+                                        <span className="font-bold">Note: </span>
+                                        <FormattedNote text={template.clinicalNote} />
+                                    </td>
+                                </tr>
+                            );
+                        }
+                        return null;
+                    })()}
                 </React.Fragment>
             );
         });
