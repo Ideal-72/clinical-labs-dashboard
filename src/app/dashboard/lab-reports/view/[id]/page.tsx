@@ -1,13 +1,12 @@
 // @ts-nocheck
 'use client';
 
+export const runtime = 'nodejs';
+
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Barcode from 'react-barcode';
-import html2canvas from 'html2canvas-pro';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { getReferenceRangeByGender } from '@/lib/getReferenceRangeByGender';
 import { getTestTemplate } from '@/lib/testTemplates';
 
@@ -381,6 +380,10 @@ export default function ViewLabReportPage() {
         setIsGeneratingPdf(true);
 
         try {
+            // Lazy load heavy libraries to prevent Edge runtime crashes during SSR
+            const { default: jsPDF } = await import('jspdf');
+            const { default: autoTable } = await import('jspdf-autotable');
+
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.width;
             const pageHeight = doc.internal.pageSize.height;
@@ -867,6 +870,9 @@ export default function ViewLabReportPage() {
     const handleWhatsAppShare = async () => {
         setIsSharing(true);
         try {
+            const { default: html2canvas } = await import('html2canvas-pro');
+            const { default: jsPDF } = await import('jspdf');
+            
             const element = reportRef.current;
             if (!element || !report) throw new Error('Report element not found');
 

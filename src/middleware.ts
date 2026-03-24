@@ -20,18 +20,15 @@ export function middleware(request: NextRequest) {
   // Root page redirection
   if (isRootPage) {
     if (isAuthenticated) {
-      url.pathname = '/dashboard/home';
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(new URL('/dashboard/home', request.url));
     } else {
-      url.pathname = '/login';
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(new URL('/login', request.url));
     }
   }
 
   // If user is authenticated and tries to access login page, redirect to dashboard
   if (isAuthenticated && isLoginPage) {
-    url.pathname = '/dashboard/home';
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL('/dashboard/home', request.url));
   }
 
   // If user is not authenticated and tries to access protected paths, redirect to login
@@ -39,8 +36,7 @@ export function middleware(request: NextRequest) {
     if (pathname.startsWith('/api')) {
       return NextResponse.json({ error: 'Unauthorized', message: 'Please log in to continue' }, { status: 401 });
     }
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();
@@ -48,6 +44,14 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/auth|api/debug-auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (authentication APIs)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files (.png, .jpg, etc.)
+     */
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$)[^?#]*)',
   ],
 };
