@@ -582,7 +582,7 @@ export default function ViewLabReportPage() {
                         return;
                     }
 
-                    let displayResult = cleanResult ? cleanResult.toUpperCase() : '';
+                    let displayResult = cleanResult ? cleanResult.toUpperCase().replace(/[▲▼]/g, '').trim() : '';
                     let displayUnits = test.units || '';
 
                     // Special handling for TuberculinDose: Result = "0.1 ml of 1 TU PPD", Units = ""
@@ -1049,10 +1049,10 @@ export default function ViewLabReportPage() {
                             {test.specimen && <div className="text-xs text-gray-600 mt-0.5">{test.specimen}</div>}
                         </td>
                         <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity || isPositiveOrReactive ? 'font-extrabold print:font-black' : 'font-normal'}`}>
-                            <div className="flex items-center justify-center h-full relative w-full gap-1">
-                                <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}`.toUpperCase() : test.result?.toUpperCase()}</span>
+                            <div className="flex items-center justify-center h-full relative w-full">
+                                <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}`.toUpperCase() : test.result?.toUpperCase().replace(/[▲▼]/g, '').trim()}</span>
                                 {analysis.isAbnormal && (
-                                    <span className="text-xs font-extrabold print:font-black absolute right-2 top-1/2 -translate-y-1/2 flex items-center print:right-2 print:-translate-y-1/2">
+                                    <span className="text-xs font-extrabold print:font-black absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
                                         {analysis.direction === 'high' ? (
                                             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-900" aria-hidden="true"><path d="M12 4l-8 8h16l-8-8z" /></svg> // Simple Triangle Up
                                         ) : (
