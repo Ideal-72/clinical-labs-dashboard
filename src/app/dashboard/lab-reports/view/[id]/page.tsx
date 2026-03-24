@@ -443,9 +443,9 @@ export default function ViewLabReportPage() {
 
             // Fixed column widths for consistent alignment
             const availableWidth = pageWidth - (margin * 2);
-            const col0Width = availableWidth * 0.42;
-            const col1Width = availableWidth * 0.30;
-            const col2Width = availableWidth * 0.28;
+            const col0Width = availableWidth * 0.37;
+            const col1Width = availableWidth * 0.33;
+            const col2Width = availableWidth * 0.30;
 
             // We use autoTable for layout, but invisible borders
             autoTable(doc, {
