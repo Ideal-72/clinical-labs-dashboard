@@ -605,7 +605,7 @@ export default function ViewLabReportPage() {
 
                     // Regular Row
                     tableBody.push([
-                        { content: `${test.test_name}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
+                        { content: `${test.test_name.replace(/\s*\([RB]\)\s*$/i, '').trim()}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
                         {
                             // Pass indicator data to cell for custom drawing in didDrawCell
                             content: displayResult,
@@ -1051,7 +1051,7 @@ export default function ViewLabReportPage() {
 
                     <tr className="border-b border-gray-200 hover:bg-gray-50">
                         <td className="p-2 print:p-1 align-top border-r border-gray-300">
-                            <div className="font-medium text-black">{test.test_name}</div>
+                            <div className="font-medium text-black">{test.test_name.replace(/\s*\([RB]\)\s*$/i, '').trim()}</div>
                             {test.specimen && <div className="text-xs text-gray-600 mt-0.5">{test.specimen}</div>}
                         </td>
                         <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity || isPositiveOrReactive ? 'font-extrabold print:font-black' : 'font-normal'}`}>
