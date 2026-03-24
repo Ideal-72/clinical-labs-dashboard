@@ -680,7 +680,7 @@ export default function ViewLabReportPage() {
                     3: { cellWidth: '30%' }
                 },
                 rowPageBreak: 'avoid', // IMPORTANT: Avoid splitting rows
-                margin: { top: headerBottomY, bottom: 40, left: margin, right: margin }, // Top margin for header space on every page
+                margin: { top: headerBottomY, bottom: 55, left: margin, right: margin }, // Top margin for header space, bottom margin for physical footer
                 didDrawCell: (data) => {
                     const cellRaw = data.cell.raw as any;
 
