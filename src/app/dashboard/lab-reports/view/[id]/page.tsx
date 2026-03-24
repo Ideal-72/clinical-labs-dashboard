@@ -376,7 +376,7 @@ export default function ViewLabReportPage() {
     const [isSharing, setIsSharing] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-    const handleSavePDF = async () => {
+    const generatePDF = async (mode: 'save' | 'print' = 'save') => {
         if (!report) return;
         setIsGeneratingPdf(true);
 
@@ -806,15 +806,25 @@ export default function ViewLabReportPage() {
             doc.setFont("helvetica", "bold");
             doc.text("*** End of Report ***", pageWidth / 2, endY, { align: 'center' });
 
-            doc.save(`Lab_Report_${report.sid_no || 'Draft'}.pdf`);
+            if (mode === 'print') {
+                // Trigger browser print dialog via inline PDF
+                doc.autoPrint();
+                const blobUrl = doc.output('bloburl');
+                window.open(blobUrl, '_blank');
+            } else {
+                doc.save(`Lab_Report_${report.sid_no || 'Draft'}.pdf`);
+            }
 
         } catch (error: any) {
             console.error('Error generating PDF:', error);
-            alert('Failed to save PDF: ' + error.message);
+            alert('Failed to generate PDF: ' + error.message);
         } finally {
             setIsGeneratingPdf(false);
         }
     };
+
+    const handlePrint = () => generatePDF('print');
+    const handleSavePDF = () => generatePDF('save');
 
     useEffect(() => {
         if (reportId) {
@@ -841,10 +851,6 @@ export default function ViewLabReportPage() {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handlePrint = () => {
-        window.print();
     };
 
     const handleDelete = async () => {
