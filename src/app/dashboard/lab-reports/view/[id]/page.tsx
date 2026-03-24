@@ -974,10 +974,15 @@ export default function ViewLabReportPage() {
             const prevTest = allTests[index - 1];
 
             // Header Logics
-            const malariaTests = ['MP - CARD METHOD', 'MF - CARD METHOD', 'BLOOD GROUPING', 'RH - TYPING', 'CROSS MATCHING TEST'];
+            const malariaTests = ['MP - CARD METHOD', 'MF - CARD METHOD'];
             const isMalariaTest = malariaTests.includes(test.test_name);
             const prevIsMalaria = prevTest && malariaTests.includes(prevTest.test_name);
             const showMalariaHeader = isMalariaTest && !prevIsMalaria && !hasGroupHeader('MALARIA PANEL');
+
+            const bloodGroupingTests = ['Blood Grouping', 'RH - TYPING', 'CROSS MATCHING TEST'];
+            const isBloodGroupingTest = bloodGroupingTests.includes(test.test_name);
+            const prevIsBloodGrouping = prevTest && bloodGroupingTests.includes(prevTest.test_name);
+            const showBloodGroupingHeader = isBloodGroupingTest && !prevIsBloodGrouping && !hasGroupHeader('BLOOD GROUPING PANEL');
 
             const isWidalTest = test.test_name.includes('SALMONELLA');
             const prevIsWidal = prevTest && prevTest.test_name.includes('SALMONELLA');
@@ -1039,6 +1044,7 @@ export default function ViewLabReportPage() {
                     {showCardiacTroponin2Header && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Cardiac Troponin</td></tr>}
                     {showElectrolytesHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">ELECTROLYTES</td></tr>}
                     {showMalariaHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Malaria Panel</td></tr>}
+                    {showBloodGroupingHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Blood Grouping Panel</td></tr>}
                     {showWidalHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">WIDAL-SLIDE METHOD</td></tr>}
                     {showVDRLHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">VDRL</td></tr>}
                     {showDenguePanelHeader && <tr className="border-b border-gray-400"><td colSpan={4} className="p-2 print:p-1 font-extrabold print:font-black text-left text-black bg-gray-50 print:bg-transparent uppercase tracking-wider pl-4">Dengue Panel</td></tr>}
