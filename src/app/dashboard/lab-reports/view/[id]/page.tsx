@@ -539,7 +539,7 @@ export default function ViewLabReportPage() {
                 });
                 const isHepatitisPanelValid = hasHBsAg || hasHCV;
 
-                section.tests.forEach(test => {
+                section.tests.forEach((test, index) => {
                     // 1. GLOBAL FILTER: Check Tuberculin Visibility First
                     const normalizedTestName = test.test_name ? test.test_name.trim().toLowerCase() : '';
                     const isTuberculinDose = normalizedTestName === 'tuberculindose';
