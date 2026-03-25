@@ -375,6 +375,9 @@ export default function ViewLabReportPage() {
     const [isSharing, setIsSharing] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+    const renderedNotesGlobal = React.useRef(new Set<string>());
+    renderedNotesGlobal.current.clear();
+
     const generatePDF = async (mode: 'save' | 'print' = 'save') => {
         if (!report) return;
         setIsGeneratingPdf(true);
@@ -498,6 +501,7 @@ export default function ViewLabReportPage() {
 
             // 3. Main Results Table Data Preparation
             const tableBody: any[] = [];
+            const renderedTemplateNotes = new Set<string>();
 
             report.sections.forEach(section => {
                 if (!section.tests || section.tests.length === 0) return;
@@ -656,8 +660,9 @@ export default function ViewLabReportPage() {
 
                     if (showNotes || isMandatoryNote) {
                         const template = getTestTemplate(section.section_name, test.test_name);
-                        if (template?.clinicalNote) {
+                        if (template?.clinicalNote && !renderedTemplateNotes.has(template.clinicalNote)) {
                             addNoteRows(template.clinicalNote, true);
+                            renderedTemplateNotes.add(template.clinicalNote);
                         }
                     }
                 });
@@ -1119,7 +1124,8 @@ export default function ViewLabReportPage() {
                         const isMandatory = mandatoryNoteTests.some(t => testNameLow.includes(t));
                         const hasResult = test.result && test.result.trim() !== '';
                         const shouldShowNote = showNotes || (isMandatory && hasResult);
-                        if (shouldShowNote && template?.clinicalNote) {
+                        if (shouldShowNote && template?.clinicalNote && !renderedNotesGlobal.current.has(template.clinicalNote)) {
+                            renderedNotesGlobal.current.add(template.clinicalNote);
                             return (
                                 <tr key={`${test.id}-clinical-note`} className="notes-section-row">
                                     <td colSpan={4} className="border-b border-gray-300 p-2 text-[10px] text-black bg-gray-100/50">
