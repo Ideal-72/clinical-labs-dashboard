@@ -683,7 +683,7 @@ export default function ViewLabReportPage() {
                     3: { cellWidth: '30%' }
                 },
                 rowPageBreak: 'avoid', // IMPORTANT: Avoid splitting rows
-                margin: { top: headerBottomY, bottom: 55, left: margin, right: margin }, // Top margin for header space, bottom margin for physical footer
+                margin: { top: headerBottomY, bottom: 30, left: margin, right: margin }, // Top margin for header space, bottom margin for physical footer
                 didDrawCell: (data) => {
                     const cellRaw = data.cell.raw as any;
 
@@ -758,9 +758,9 @@ export default function ViewLabReportPage() {
             // --- Signature Block (End of Report) ---
             let sigY = (doc as any).lastAutoTable.finalY + (report.comments ? 25 : 15);
 
-            // Ensure space for signature AND the 55mm physical footer margin
-            // The signature block needs ~40mm of vertical space. 55 + 40 = 95.
-            if (sigY > pageHeight - 95) {
+            // Ensure space for signature AND the 30mm physical footer margin
+            // The signature block needs ~40mm of vertical space. 30 + 40 = 70.
+            if (sigY > pageHeight - 70) {
                 doc.addPage();
                 sigY = headerBottomY; // Start below the physical header space on the new page
             }
