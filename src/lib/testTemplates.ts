@@ -64,8 +64,8 @@ export const testTemplates: TestTemplates = {
             specimen: "",
             method: ""
         },
-        "MP - CARD METHOD": { units: "", referenceRange: "Qualitative Detection", specimen: "Whole Blood", method: "Sandwich Immunoassay" },
-        "MF - CARD METHOD": { units: "", referenceRange: "Qualitative Detection", specimen: "Whole Blood", method: "Sandwich Immunoassay" },
+        "MP - CARD METHOD": { units: "", referenceRange: "Qualitative Detection", specimen: "Whole Blood", method: "Sandwich Immunoassay", clinicalNote: "**Suggest to do Malarial Parasite [MP] Smear and Microfilaria [MF] Staining for Confirmation**" },
+        "MF - CARD METHOD": { units: "", referenceRange: "Qualitative Detection", specimen: "Whole Blood", method: "Sandwich Immunoassay", clinicalNote: "**Suggest to do Malarial Parasite [MP] Smear and Microfilaria [MF] Staining for Confirmation**" },
         "BLOOD GROUPING PANEL": {
             type: 'group_header',
             units: "",

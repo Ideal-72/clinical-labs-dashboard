@@ -649,7 +649,7 @@ export default function ViewLabReportPage() {
 
                     // Clinical Notes (Template)
                     const alwaysShowNotesTests = [
-                        'crp', 'hbs ag', 'hbsag', 'dengue', 'aso', 'hcv', 'vdrl', 'syphilis', 'hiv', 'widal', 'typhi', 'salmonella', 'pregnancy', 'troponin'
+                        'crp', 'hbs ag', 'hbsag', 'dengue', 'aso', 'hcv', 'vdrl', 'syphilis', 'hiv', 'widal', 'typhi', 'salmonella', 'pregnancy', 'troponin', 'mp - card', 'mf - card'
                     ];
                     const testNameLower = (test.test_name || '').toLowerCase().trim();
                     const isMandatoryNote = alwaysShowNotesTests.some(t => testNameLower.includes(t));
@@ -1114,7 +1114,7 @@ export default function ViewLabReportPage() {
                         </tr>
                     )}
                     {(() => {
-                        const mandatoryNoteTests = ['crp', 'hbs ag', 'hbsag', 'dengue', 'aso', 'hcv', 'vdrl', 'syphilis', 'hiv', 'widal', 'typhi', 'salmonella', 'pregnancy', 'troponin'];
+                        const mandatoryNoteTests = ['crp', 'hbs ag', 'hbsag', 'dengue', 'aso', 'hcv', 'vdrl', 'syphilis', 'hiv', 'widal', 'typhi', 'salmonella', 'pregnancy', 'troponin', 'mp - card', 'mf - card'];
                         const testNameLow = (test.test_name || '').toLowerCase().trim();
                         const isMandatory = mandatoryNoteTests.some(t => testNameLow.includes(t));
                         const hasResult = test.result && test.result.trim() !== '';
