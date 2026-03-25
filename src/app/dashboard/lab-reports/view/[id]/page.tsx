@@ -661,8 +661,16 @@ export default function ViewLabReportPage() {
                     if (showNotes || isMandatoryNote) {
                         const template = getTestTemplate(section.section_name, test.test_name);
                         if (template?.clinicalNote && !renderedTemplateNotes.has(template.clinicalNote)) {
-                            addNoteRows(template.clinicalNote, true);
-                            renderedTemplateNotes.add(template.clinicalNote);
+                            // Check if a subsequent test in this section will use the same note
+                            const isSharedByLaterTest = section.tests.slice(index + 1).some((t: any) => {
+                                const nextTemplate = getTestTemplate(section.section_name, t.test_name);
+                                return nextTemplate?.clinicalNote === template.clinicalNote;
+                            });
+
+                            if (!isSharedByLaterTest) {
+                                addNoteRows(template.clinicalNote, true);
+                                renderedTemplateNotes.add(template.clinicalNote);
+                            }
                         }
                     }
                 });
@@ -1124,7 +1132,17 @@ export default function ViewLabReportPage() {
                         const isMandatory = mandatoryNoteTests.some(t => testNameLow.includes(t));
                         const hasResult = test.result && test.result.trim() !== '';
                         const shouldShowNote = showNotes || (isMandatory && hasResult);
-                        if (shouldShowNote && template?.clinicalNote && !renderedNotesGlobal.current.has(template.clinicalNote)) {
+
+                        // Check if a subsequent test in this section will use the same note
+                        let isSharedByLaterTest = false;
+                        if (template?.clinicalNote) {
+                            isSharedByLaterTest = allTests.slice(index + 1).some((t: any) => {
+                                const nextTemplate = getTestTemplate(sectionName, t.test_name);
+                                return nextTemplate?.clinicalNote === template.clinicalNote;
+                            });
+                        }
+
+                        if (shouldShowNote && template?.clinicalNote && !isSharedByLaterTest && !renderedNotesGlobal.current.has(template.clinicalNote)) {
                             renderedNotesGlobal.current.add(template.clinicalNote);
                             return (
                                 <tr key={`${test.id}-clinical-note`} className="notes-section-row">
