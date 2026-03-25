@@ -387,7 +387,7 @@ export default function ViewLabReportPage() {
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.width;
             const pageHeight = doc.internal.pageSize.height;
-            const margin = 25;
+            const margin = 15;
             let currentY = margin;
 
             // Helper to load image
@@ -585,7 +585,7 @@ export default function ViewLabReportPage() {
                         return;
                     }
 
-                    let displayResult = cleanResult ? cleanResult.toUpperCase().replace(/[▲▼]/g, '').trim() : '';
+                    let displayResult = cleanResult ? cleanResult.toUpperCase().replace(/[▲▼▴▾△▽▵▿↑↓]/g, '').trim() : '';
                     let displayUnits = test.units || '';
 
                     // Special handling for TuberculinDose: Result = "0.1 ml of 1 TU PPD", Units = ""
@@ -1057,7 +1057,7 @@ export default function ViewLabReportPage() {
                         </td>
                         <td className={`p-2 print:p-1 align-top text-center border-r border-gray-300 relative ${analysis.isAbnormal || isHbA1cBold || isSpGravity || isPositiveOrReactive ? 'font-extrabold print:font-black' : 'font-normal'}`}>
                             <div className="flex items-center justify-center h-full relative w-full">
-                                <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}`.toUpperCase() : test.result?.toUpperCase().replace(/[▲▼]/g, '').trim()}</span>
+                                <span>{test.test_name === 'TuberculinDose' ? `${test.result} ${test.units}`.toUpperCase() : test.result?.toUpperCase().replace(/[▲▼▴▾△▽▵▿↑↓]/g, '').trim()}</span>
                                 {analysis.isAbnormal && (
                                     <span className="text-xs font-extrabold print:font-black absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
                                         {analysis.direction === 'high' ? (
