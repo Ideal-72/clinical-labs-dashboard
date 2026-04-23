@@ -1,5 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../lib/supabase';
+import {
+  isSupabaseConfigured,
+  localGetReportGroups,
+  localCreateReportGroup,
+  localUpdateReportGroup,
+  localDeleteReportGroup,
+} from '../../lib/localStore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
@@ -9,6 +16,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // ── LOCAL DEV MODE (no Supabase) ──────────────────────────────────────────
+  if (!isSupabaseConfigured()) {
+    switch (method) {
+      case 'GET':
+        return res.status(200).json(localGetReportGroups(doctorId as string));
+      case 'POST': {
+        const { name, testGroups } = req.body;
+        return res.status(201).json(localCreateReportGroup(doctorId as string, { name, testGroups: testGroups || '' }));
+      }
+      case 'PUT': {
+        const { id, name, testGroups } = req.body;
+        const updated = localUpdateReportGroup(doctorId as string, Number(id), { name, testGroups: testGroups || '' });
+        if (!updated) return res.status(404).json({ error: 'Not found' });
+        return res.status(200).json(updated);
+      }
+      case 'DELETE': {
+        const { id } = req.body;
+        localDeleteReportGroup(doctorId as string, Number(id));
+        return res.status(200).json({ message: 'Report group deleted' });
+      }
+      default:
+        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+        return res.status(405).end(`Method ${method} Not Allowed`);
+    }
+  }
+
+  // ── SUPABASE MODE ─────────────────────────────────────────────────────────
   switch (method) {
     case 'GET':
       const { data: reportGroups, error: fetchError } = await supabase
@@ -21,7 +55,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: fetchError.message });
       }
 
-      // Transform data to match frontend interface
       const transformedData = reportGroups.map(group => ({
         id: group.id,
         name: group.name,
@@ -46,13 +79,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: insertError.message });
       }
 
-      const transformedNewGroup = {
+      return res.status(201).json({
         id: newReportGroup.id,
         name: newReportGroup.name,
         testGroups: newReportGroup.test_groups || ''
-      };
-
-      return res.status(201).json(transformedNewGroup);
+      });
 
     case 'PUT':
       const { id, name: updateName, testGroups: updateTestGroups } = req.body;
@@ -71,13 +102,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: updateError.message });
       }
 
-      const transformedUpdatedGroup = {
+      return res.status(200).json({
         id: updatedReportGroup.id,
         name: updatedReportGroup.name,
         testGroups: updatedReportGroup.test_groups || ''
-      };
-
-      return res.status(200).json(transformedUpdatedGroup);
+      });
 
     case 'DELETE':
       const { id: deleteId } = req.body;

@@ -2,6 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../../lib/supabase';
 import bcrypt from 'bcryptjs';
 
+// Local dev fallback credentials (used when Supabase is not configured)
+const LOCAL_DEV_USER = 'admin';
+const LOCAL_DEV_PASS = 'admin123';
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -11,6 +15,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const isSupabaseConfigured = supabaseUrl && supabaseUrl.trim() && supabaseUrl.startsWith('http') && !supabaseUrl.includes('placeholder');
+
+  // If Supabase is not configured, use local dev bypass
+  if (!isSupabaseConfigured) {
+    if (username === LOCAL_DEV_USER && password === LOCAL_DEV_PASS) {
+      return res.status(200).json({
+        message: 'Login successful',
+        doctor: { id: 1, username: LOCAL_DEV_USER }
+      });
+    }
+    return res.status(401).json({ error: 'Invalid username or password' });
   }
 
   try {

@@ -1,5 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../lib/supabase';
+import {
+  isSupabaseConfigured,
+  localGetPatients,
+  localCreatePatient,
+  localUpdatePatient,
+  localDeletePatient,
+} from '../../lib/localStore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
@@ -9,6 +16,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // ── LOCAL DEV MODE (no Supabase) ──────────────────────────────────────────
+  if (!isSupabaseConfigured()) {
+    switch (method) {
+      case 'GET': {
+        const { sid } = req.query;
+        const patients = localGetPatients(doctorId as string, typeof sid === 'string' ? sid : undefined);
+        return res.status(200).json(patients);
+      }
+      case 'POST': {
+        const { opno, sid_no, name, age, gender, address, referred_by } = req.body;
+        const patient = localCreatePatient(doctorId as string, { opno, sid_no, name, age, gender, address, referred_by });
+        return res.status(201).json(patient);
+      }
+      case 'PUT': {
+        const { id, opno, sid_no, name, age, gender, address, referred_by } = req.body;
+        const updated = localUpdatePatient(doctorId as string, Number(id), { opno, sid_no, name, age, gender, address, referred_by });
+        if (!updated) return res.status(404).json({ error: 'Patient not found' });
+        return res.status(200).json(updated);
+      }
+      case 'DELETE': {
+        const { id: deleteId } = req.body;
+        localDeletePatient(doctorId as string, Number(deleteId));
+        return res.status(200).json({ message: 'Patient deleted' });
+      }
+      default:
+        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+        return res.status(405).end(`Method ${method} Not Allowed`);
+    }
+  }
+
+  // ── SUPABASE MODE ─────────────────────────────────────────────────────────
   switch (method) {
     case 'GET':
       const { sid } = req.query;
@@ -34,7 +72,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     case 'POST':
       const { opno, sid_no, name, age, gender, address, referred_by } = req.body;
 
-      // Generate next OPNO if not provided
       let finalOpno = opno;
       if (!opno) {
         const { data: lastPatient } = await supabase

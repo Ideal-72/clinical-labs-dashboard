@@ -599,6 +599,12 @@ export default function ViewLabReportPage() {
                     }
 
                     // Regular Row
+                    const pdfTemplateRange = getTestTemplate(section.section_name, test.test_name)?.referenceRange;
+                    const pdfDisplayRange = (pdfTemplateRange && pdfTemplateRange.trim())
+                        ? pdfTemplateRange
+                        : (test.reference_range || '');
+                    const pdfRefRange = getReferenceRangeByGender(pdfDisplayRange, report.sex, report.age);
+
                     tableBody.push([
                         { content: `${test.test_name.replace(/\s*\([RB]\)\s*$/i, '').trim()}\n${test.specimen ? `(${test.specimen})` : ''}`, styles: { fontStyle: 'bold' } },
                         {
@@ -608,7 +614,7 @@ export default function ViewLabReportPage() {
                             indicator: analysis.isAbnormal ? analysis.direction : null
                         },
                         { content: displayUnits, styles: { halign: 'center' } },
-                        { content: `${(test.reference_range || '').replace(/\\n/g, '\n')}\n${test.method ? `(${test.method})` : ''}`, styles: { fontSize: 8 } }
+                        { content: `${pdfRefRange.replace(/\\n/g, '\n')}\n${test.method ? `(${test.method})` : ''}`, styles: { fontSize: 8 } }
                     ]);
 
                     // Helper to process and add note rows
@@ -1086,12 +1092,22 @@ export default function ViewLabReportPage() {
                             {test.test_name === 'TuberculinDose' ? '' : test.units}
                         </td>
                         <td className="p-2 print:p-1 align-top border-r border-gray-300">
-                            {test.reference_range && (
-                                <div className="text-sm print:text-xs text-black whitespace-pre-line font-medium leading-tight">{getReferenceRangeByGender(test.reference_range, report.sex, report.age)}</div>
-                            )}
+                            {(() => {
+                                // Prefer the live template reference range over the stale stored DB value.
+                                // This ensures updated ranges (e.g. gender-specific Uric Acid) always show correctly
+                                // even for reports created before the template was changed.
+                                const templateRange = template?.referenceRange;
+                                const displayRange = (templateRange && templateRange.trim())
+                                    ? templateRange
+                                    : test.reference_range;
+                                return displayRange && (
+                                    <div className="text-sm print:text-xs text-black whitespace-pre-line font-medium leading-tight">{getReferenceRangeByGender(displayRange, report.sex, report.age)}</div>
+                                );
+                            })()}
                             {test.method && (
                                 <div className="text-[10px] text-gray-600 mt-1 uppercase tracking-tight">{test.method}</div>
                             )}
+
                         </td>
                     </tr>
 

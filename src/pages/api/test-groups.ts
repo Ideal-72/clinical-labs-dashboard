@@ -1,5 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../lib/supabase';
+import {
+  isSupabaseConfigured,
+  localGetTestGroups,
+  localCreateTestGroup,
+  localUpdateTestGroup,
+  localDeleteTestGroup,
+} from '../../lib/localStore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
@@ -9,6 +16,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // ── LOCAL DEV MODE (no Supabase) ──────────────────────────────────────────
+  if (!isSupabaseConfigured()) {
+    switch (method) {
+      case 'GET':
+        return res.status(200).json(localGetTestGroups(doctorId as string));
+      case 'POST': {
+        const { name, method: m, specimen } = req.body;
+        return res.status(201).json(localCreateTestGroup(doctorId as string, { name, method: m || '', specimen: specimen || '' }));
+      }
+      case 'PUT': {
+        const { id, name, method: m, specimen } = req.body;
+        const updated = localUpdateTestGroup(doctorId as string, Number(id), { name, method: m || '', specimen: specimen || '' });
+        if (!updated) return res.status(404).json({ error: 'Not found' });
+        return res.status(200).json(updated);
+      }
+      case 'DELETE': {
+        const { id } = req.body;
+        localDeleteTestGroup(doctorId as string, Number(id));
+        return res.status(200).json({ message: 'Test group deleted' });
+      }
+      default:
+        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+        return res.status(405).end(`Method ${method} Not Allowed`);
+    }
+  }
+
+  // ── SUPABASE MODE ─────────────────────────────────────────────────────────
   switch (method) {
     case 'GET':
       const { data: testGroups, error: fetchError } = await supabase
@@ -21,7 +55,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: fetchError.message });
       }
 
-      // Transform data to match frontend interface
       const transformedData = testGroups.map(group => ({
         id: group.id,
         name: group.name,
@@ -48,14 +81,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: insertError.message });
       }
 
-      const transformedNewGroup = {
+      return res.status(201).json({
         id: newTestGroup.id,
         name: newTestGroup.name,
         method: newTestGroup.method_used || '',
         specimen: newTestGroup.specimen || ''
-      };
-
-      return res.status(201).json(transformedNewGroup);
+      });
 
     case 'PUT':
       const { id, name: updateName, method: updateMethod, specimen: updateSpecimen } = req.body;
@@ -75,14 +106,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: updateError.message });
       }
 
-      const transformedUpdatedGroup = {
+      return res.status(200).json({
         id: updatedTestGroup.id,
         name: updatedTestGroup.name,
         method: updatedTestGroup.method_used || '',
         specimen: updatedTestGroup.specimen || ''
-      };
-
-      return res.status(200).json(transformedUpdatedGroup);
+      });
 
     case 'DELETE':
       const { id: deleteId } = req.body;

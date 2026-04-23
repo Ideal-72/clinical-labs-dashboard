@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
+import {
+    isSupabaseConfigured,
+    localGetLabReports,
+    localCreateLabReport,
+} from '@/lib/localStore';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,67 +13,44 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const doctorId = searchParams.get('doctorId');
-        const date = searchParams.get('date');
-        const patientId = searchParams.get('patientId');
-        const search = searchParams.get('search'); // New search parameter
-        const patient_id = searchParams.get('patient_id'); // Handle both cases just in case
+        const date = searchParams.get('date') || undefined;
+        const patientId = searchParams.get('patientId') || searchParams.get('patient_id') || undefined;
+        const search = searchParams.get('search') || undefined;
 
         if (!doctorId) {
-            return NextResponse.json(
-                { error: 'Doctor ID is required' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Doctor ID is required' }, { status: 400 });
         }
 
+        // ── LOCAL DEV MODE ────────────────────────────────────────────────────
+        if (!isSupabaseConfigured()) {
+            const reports = localGetLabReports(doctorId, { date, patientId, search });
+            return NextResponse.json({ reports });
+        }
+
+        // ── SUPABASE MODE ─────────────────────────────────────────────────────
         let query = supabase
             .from('lab_reports')
             .select('*')
             .eq('doctor_id', doctorId)
             .order('created_at', { ascending: false });
 
-        // If search is present, prioritize search over specific filters
         if (search) {
-            // Search across multiple columns using 'or'
-            // Note: 'ilike' is for case-insensitive pattern matching.
-            // We cast patient_id to text if needed, but Supabase might handle it.
-            // Assuming patient_name and sid_no are text.
             const searchTerm = `%${search}%`;
             query = query.or(`patient_name.ilike.${searchTerm},sid_no.ilike.${searchTerm},patient_id.ilike.${searchTerm}`);
         } else {
-            // Apply standard filters if no search (or combine them, but typically search overrides)
-            if (date) {
-                // Check if date string is valid YYYY-MM-DD
-                if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                    // Filter from start of day (00:00:00) to end of day (23:59:59.999)
-                    // Assuming date stored in DB is ISO string or timestamp
-                    const startOfDay = `${date}T00:00:00.000Z`; // Adjust timezone logic if needed, currently assumes UTC storage matching date input
-                    const endOfDay = `${date}T23:59:59.999Z`;
-
-                    // Actually, simpler to just match the day part if using Postgres date casting, 
-                    // but using range is safer for timestamptz.
-                    // We'll broaden the selection to ensure we catch local time shifts if necessary,
-                    // but strict range on the input date string is standard.
-                    query = query.gte('reported_date', `${date}T00:00:00`).lt('reported_date', `${date}T23:59:59.999`);
-                }
+            if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                query = query.gte('reported_date', `${date}T00:00:00`).lt('reported_date', `${date}T23:59:59.999`);
             }
-
-            const pId = patientId || patient_id;
-            if (pId) {
-                query = query.eq('patient_id', pId);
-            }
+            if (patientId) query = query.eq('patient_id', patientId);
         }
 
         const { data, error } = await query;
-
         if (error) throw error;
 
         return NextResponse.json({ reports: data });
     } catch (error: any) {
         console.error('Error fetching reports:', error);
-        return NextResponse.json(
-            { error: 'Failed to fetch reports', details: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to fetch reports', details: error.message }, { status: 500 });
     }
 }
 
@@ -78,16 +60,17 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { patientDetails, sections, doctorId } = body;
 
-        // Validate required fields
         if (!patientDetails || !doctorId) {
-            return NextResponse.json(
-                { error: 'Patient details and doctor ID are required' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Patient details and doctor ID are required' }, { status: 400 });
         }
 
-        // Insert lab report
-        // Try to insert with include_header
+        // ── LOCAL DEV MODE ────────────────────────────────────────────────────
+        if (!isSupabaseConfigured()) {
+            const report = localCreateLabReport(patientDetails, sections || [], doctorId);
+            return NextResponse.json({ success: true, report, message: 'Report created successfully' });
+        }
+
+        // ── SUPABASE MODE ─────────────────────────────────────────────────────
         let reportData, reportError;
 
         try {
@@ -122,10 +105,9 @@ export async function POST(request: NextRequest) {
                 reportError.message.includes('comments') ||
                 reportError.message.includes('schema cache')
             )) {
-                throw reportError; // Throw to catch block for retry
+                throw reportError;
             }
         } catch (err) {
-            // Fallback: Try insertion WITHOUT optional columns if they don't exist
             console.warn('Failed to insert with optional columns, retrying without them...', err);
             const fallbackResult = await supabase
                 .from('lab_reports')
@@ -142,7 +124,6 @@ export async function POST(request: NextRequest) {
                     reported_date: patientDetails.reportedDate || new Date().toISOString(),
                     doctor_id: doctorId,
                     created_by: doctorId,
-                    // optional columns omitted
                 })
                 .select()
                 .single();
@@ -153,24 +134,16 @@ export async function POST(request: NextRequest) {
 
         if (reportError) throw reportError;
 
-        // Insert sections and tests
         if (sections && sections.length > 0) {
             for (let i = 0; i < sections.length; i++) {
                 const section = sections[i];
-
                 const { data: sectionData, error: sectionError } = await supabase
                     .from('test_sections')
-                    .insert({
-                        report_id: reportData.id,
-                        section_name: section.name,
-                        display_order: i,
-                    })
+                    .insert({ report_id: reportData.id, section_name: section.name, display_order: i })
                     .select()
                     .single();
-
                 if (sectionError) throw sectionError;
 
-                // Insert tests for this section
                 if (section.tests && section.tests.length > 0) {
                     const testInserts = section.tests.map((test: any, testIndex: number) => ({
                         section_id: sectionData.id,
@@ -184,26 +157,15 @@ export async function POST(request: NextRequest) {
                         display_order: testIndex,
                         row_type: test.rowType || 'test',
                     }));
-
-                    const { error: testsError } = await supabase
-                        .from('test_results')
-                        .insert(testInserts);
-
+                    const { error: testsError } = await supabase.from('test_results').insert(testInserts);
                     if (testsError) throw testsError;
                 }
             }
         }
 
-        return NextResponse.json({
-            success: true,
-            report: reportData,
-            message: 'Report created successfully',
-        });
+        return NextResponse.json({ success: true, report: reportData, message: 'Report created successfully' });
     } catch (error: any) {
         console.error('Error creating report:', error);
-        return NextResponse.json(
-            { error: 'Failed to create report', details: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to create report', details: error.message }, { status: 500 });
     }
 }

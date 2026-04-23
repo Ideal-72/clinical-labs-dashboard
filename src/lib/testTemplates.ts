@@ -267,7 +267,7 @@ export const testTemplates: TestTemplates = {
 
         "Uric Acid": {
             units: "mg/dL",
-            referenceRange: "M: 3.5-7.2, F: 3.5-6.0",
+            referenceRange: "Male: 3.5-6.0\nFemale: 2.5-6.0",
             specimen: "Serum",
             method: "Uricase/peroxidase",
             clinicalNote: "Uric acid is a waste product from purine metabolism. High levels (hyperuricemia) can cause gout, characterized by painful joint inflammation, especially in the big toe. It may also indicate kidney disease or increased cell turnover. **Low-purine diet and medications can help manage elevated levels.**"
@@ -296,6 +296,27 @@ export const testTemplates: TestTemplates = {
             specimen: "Serum/Plasma/Whole Blood",
             method: "Lateral Flow Chromatographic Immunoassay",
             clinicalNote: "Cardiac Troponin I (cTnI) is a cardiac muscle protein with a molecular weight of 22.5 kilodalton. Together with troponin T (TnT) and troponin C (TnC), TnI forms the troponin complex in the heart to play a fundamental role in the transmission of intracellular calcium signals actin-myosin interaction. The isoform of TnI has additional amino acid residues in its N-terminal that does not exist in the skeletal forms thus making cTnI a specific cardiac marker. Normally the level of cTnI in the blood is very low. cTnI is released into the blood stream in forms of free cTnI and cTnI-C-T complex at 4-6 hours after myocardial cell damage. The elevated level of cTnI could be as high as 300 ng/mL during 60-80 hours after AMI and remains detectable for up to 10-14 days post AMI. Therefore, circulating cTnI is a specific and sensitive marker for AMI. The release pattern of cTnI is similar to CK-MB, but while CK-MB levels return to normal after 72 hours, Troponin I remain elevated for 6-10 days, thus providing for a longer window of detection for cardiac injury. The high specificity of cTnI measurements for the identification of myocardial damage has been demonstrated in conditions such as the perioperative period, after marathon runs, and blunt chest trauma. cTnI release has also been documented in cardiac conditions other than acute myocardial infarction (AMI) such as unstable angina, congestive heart failure, and ischemic damage due to coronary artery bypass surgery. **If clinical symptoms persist suggest to do quantitative methods for confirmation.**"
+        },
+        "Hepatitis Panel": {
+            type: 'group_header',
+            units: "",
+            referenceRange: "",
+            specimen: "",
+            method: ""
+        },
+        "HBS AG": {
+            units: "",
+            referenceRange: "Qualitative Detection",
+            specimen: "Serum/Plasma",
+            method: "Immunochromatographic Assay",
+            clinicalNote: "Hepatitis B is a viral infection that attacks the liver and can cause both acute and chronic disease. The hepatitis B virus can survive outside the body for at least 7 days. The complex antigen found on the surface of HBV is called HBsAg. Previous designations included the Australia or Au antigen. The presence of HBsAg in serum or plasma is an indication of an active Hepatitis B infection, either acute or chronic. The incubation period of the hepatitis B virus is 120 days on average, but can vary from 45 to 160 days. Hepatitis B virus (HBV) is a global health problem, it is a major cause of chronic hepatitis, liver cirrhosis and hepatocellular carcinoma.\n\n**Note: This is only a screening test. All reactive samples should be confirmed by (CLIA/ELISA, CMIA & PCR) confirmatory tests. A negative result does not exclude the possibility of exposure or infection.**"
+        },
+        "HCV": {
+            units: "",
+            referenceRange: "Qualitative Detection",
+            specimen: "Serum/Plasma",
+            method: "Sandwich Immunochromatographic Assay",
+            clinicalNote: "Introduction\nHepatitis C Virus (HCV) is now recognized as a major agent of chronic hepatitis transfusion acquired non-A, non-B hepatitis and liver disease throughout the world. HCV is a positive sense single stranded RNA virus. The major immunoreactive antigens of its proteins have been reported as core, NS3, NS4 and NS5 regions of HCV genome, which are known as highly immunodominant regions.\nHCV infection frequently progresses to chronic liver disease. On the basis of Phylogenetic analysis, HCV has been grouped into six major genotypes each of which contains one or more subtypes. The distribution of HCV genotypes varies in different geographical areas.\n\n**Note: This is only a screening test. All reactive samples should be confirmed by (CLIA/ELISA, CMIA & PCR) confirmatory tests. A negative result does not exclude the possibility of exposure or infection**"
         },
     },
 
@@ -409,28 +430,7 @@ export const testTemplates: TestTemplates = {
         },
 
 
-        "Hepatitis Panel": {
-            type: 'group_header',
-            units: "",
-            referenceRange: "",
-            specimen: "",
-            method: ""
-        },
-        "HBS AG": {
-            units: "",
-            referenceRange: "Qualitative Detection",
-            specimen: "Serum/Plasma",
-            method: "Immunochromatographic Assay",
-            clinicalNote: "Hepatitis B is a viral infection that attacks the liver and can cause both acute and chronic disease. The hepatitis B virus can survive outside the body for at least 7 days. The complex antigen found on the surface of HBV is called HBsAg. Previous designations included the Australia or Au antigen. The presence of HBsAg in serum or plasma is an indication of an active Hepatitis B infection, either acute or chronic. The incubation period of the hepatitis B virus is 120 days on average, but can vary from 45 to 160 days. Hepatitis B virus (HBV) is a global health problem, it is a major cause of chronic hepatitis, liver cirrhosis and hepatocellular carcinoma.\n\n**Note: This is only a screening test. All reactive samples should be confirmed by (CLIA/ELISA, CMIA & PCR) confirmatory tests. A negative result does not exclude the possibility of exposure or infection.**"
-        },
-        "HCV": {
-            units: "",
-            referenceRange: "Qualitative Detection",
-            specimen: "Serum/Plasma",
-            method: "Sandwich Immunochromatographic Assay",
-            clinicalNote: "Introduction\nHepatitis C Virus (HCV) is now recognized as a major agent of chronic hepatitis transfusion acquired non-A, non-B hepatitis and liver disease throughout the world. HCV is a positive sense single stranded RNA virus. The major immunoreactive antigens of its proteins have been reported as core, NS3, NS4 and NS5 regions of HCV genome, which are known as highly immunodominant regions.\nHCV infection frequently progresses to chronic liver disease. On the basis of Phylogenetic analysis, HCV has been grouped into six major genotypes each of which contains one or more subtypes. The distribution of HCV genotypes varies in different geographical areas.\n\n**Note: This is only a screening test. All reactive samples should be confirmed by (CLIA/ELISA, CMIA & PCR) confirmatory tests. A negative result does not exclude the possibility of exposure or infection**"
 
-        },
 
         "VDRL": {
             type: 'group_header',

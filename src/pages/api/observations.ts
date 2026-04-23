@@ -1,5 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../lib/supabase';
+import {
+  isSupabaseConfigured,
+  localGetObservations,
+  localCreateObservation,
+  localUpdateObservation,
+  localDeleteObservation,
+} from '../../lib/localStore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
@@ -9,6 +16,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // ── LOCAL DEV MODE (no Supabase) ──────────────────────────────────────────
+  if (!isSupabaseConfigured()) {
+    switch (method) {
+      case 'GET': {
+        const { patient_id } = req.query;
+        const observations = localGetObservations(doctorId as string, patient_id as string | undefined);
+        return res.status(200).json(observations);
+      }
+      case 'POST': {
+        const { patient_id, report_date, report_name, parameters } = req.body;
+        const obs = localCreateObservation(doctorId as string, { patient_id, report_date, report_name, parameters });
+        return res.status(201).json(obs);
+      }
+      case 'PUT': {
+        const { id, patient_id, report_date, report_name, parameters } = req.body;
+        const updated = localUpdateObservation(doctorId as string, Number(id), { patient_id, report_date, report_name, parameters });
+        if (!updated) return res.status(404).json({ error: 'Observation not found' });
+        return res.status(200).json(updated);
+      }
+      case 'DELETE': {
+        const { id: deleteId } = req.body;
+        localDeleteObservation(doctorId as string, Number(deleteId));
+        return res.status(200).json({ message: 'Observation deleted' });
+      }
+      default:
+        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+        return res.status(405).end(`Method ${method} Not Allowed`);
+    }
+  }
+
+  // ── SUPABASE MODE ─────────────────────────────────────────────────────────
   switch (method) {
     case 'GET':
       const { patient_id } = req.query;
