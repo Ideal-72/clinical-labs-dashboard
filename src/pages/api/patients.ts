@@ -1,0 +1,151 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { supabase } from '../../lib/supabase';
+import {
+  isSupabaseConfigured,
+  localGetPatients,
+  localCreatePatient,
+  localUpdatePatient,
+  localDeletePatient,
+} from '../../lib/localStore';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { method } = req;
+  const doctorId = req.headers.authorization;
+
+  if (!doctorId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // ── LOCAL DEV MODE (no Supabase) ──────────────────────────────────────────
+  if (!isSupabaseConfigured()) {
+    switch (method) {
+      case 'GET': {
+        const { sid } = req.query;
+        const patients = localGetPatients(doctorId as string, typeof sid === 'string' ? sid : undefined);
+        return res.status(200).json(patients);
+      }
+      case 'POST': {
+        const { opno, sid_no, name, age, gender, address, referred_by } = req.body;
+        const patient = localCreatePatient(doctorId as string, { opno, sid_no, name, age, gender, address, referred_by });
+        return res.status(201).json(patient);
+      }
+      case 'PUT': {
+        const { id, opno, sid_no, name, age, gender, address, referred_by } = req.body;
+        const updated = localUpdatePatient(doctorId as string, Number(id), { opno, sid_no, name, age, gender, address, referred_by });
+        if (!updated) return res.status(404).json({ error: 'Patient not found' });
+        return res.status(200).json(updated);
+      }
+      case 'DELETE': {
+        const { id: deleteId } = req.body;
+        localDeletePatient(doctorId as string, Number(deleteId));
+        return res.status(200).json({ message: 'Patient deleted' });
+      }
+      default:
+        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+        return res.status(405).end(`Method ${method} Not Allowed`);
+    }
+  }
+
+  // ── SUPABASE MODE ─────────────────────────────────────────────────────────
+  switch (method) {
+    case 'GET':
+      const { sid } = req.query;
+      let query = supabase
+        .from('patients')
+        .select('id, opno, sid_no, name, age, gender, address, referred_by, created_at')
+        .eq('doctor_id', doctorId);
+
+      if (sid && typeof sid === 'string') {
+        query = query.eq('sid_no', sid);
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
+
+      const { data: patients, error: fetchError } = await query;
+
+      if (fetchError) {
+        return res.status(500).json({ error: fetchError.message });
+      }
+
+      return res.status(200).json(patients || []);
+
+    case 'POST':
+      const { opno, sid_no, name, age, gender, address, referred_by } = req.body;
+
+      let finalOpno = opno;
+      if (!opno) {
+        const { data: lastPatient } = await supabase
+          .from('patients')
+          .select('opno')
+          .eq('doctor_id', doctorId)
+          .order('opno', { ascending: false })
+          .limit(1);
+
+        const lastOpno = lastPatient?.[0]?.opno || '000000';
+        const nextNum = parseInt(lastOpno) + 1;
+        finalOpno = nextNum.toString().padStart(6, '0');
+      }
+
+      const { data: newPatient, error: insertError } = await supabase
+        .from('patients')
+        .insert([{
+          doctor_id: doctorId,
+          opno: finalOpno,
+          sid_no: sid_no || '',
+          name: name.substring(0, 100),
+          age: parseInt(age),
+          gender,
+          address: address ? address.substring(0, 100) : '',
+          referred_by: referred_by || ''
+        }])
+        .select('id, opno, sid_no, name, age, gender, address, referred_by, created_at')
+        .single();
+
+      if (insertError) {
+        return res.status(500).json({ error: insertError.message });
+      }
+
+      return res.status(201).json(newPatient);
+
+    case 'PUT':
+      const { id, opno: updateOpno, sid_no: updateSid, name: updateName, age: updateAge, gender: updateGender, address: updateAddress, referred_by: updateReferredBy } = req.body;
+      const { data: updatedPatient, error: updateError } = await supabase
+        .from('patients')
+        .update({
+          opno: updateOpno,
+          sid_no: updateSid,
+          name: updateName.substring(0, 100),
+          age: parseInt(updateAge),
+          gender: updateGender,
+          address: updateAddress ? updateAddress.substring(0, 100) : '',
+          referred_by: updateReferredBy || ''
+        })
+        .eq('id', id)
+        .eq('doctor_id', doctorId)
+        .select('id, opno, sid_no, name, age, gender, address, referred_by, created_at')
+        .single();
+
+      if (updateError) {
+        return res.status(500).json({ error: updateError.message });
+      }
+
+      return res.status(200).json(updatedPatient);
+
+    case 'DELETE':
+      const { id: deleteId } = req.body;
+      const { error: deleteError } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', deleteId)
+        .eq('doctor_id', doctorId);
+
+      if (deleteError) {
+        return res.status(500).json({ error: deleteError.message });
+      }
+      return res.status(200).json({ message: 'Patient deleted' });
+
+    default:
+      res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+      return res.status(405).end(`Method ${method} Not Allowed`);
+  }
+}
