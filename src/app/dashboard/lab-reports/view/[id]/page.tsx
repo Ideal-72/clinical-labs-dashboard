@@ -278,20 +278,22 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
     }
 
     // Handle "min - max" format (e.g., "10.0 - 20.0" or "Healthy Adult : 70 - 110")
-    else if (cleanRange.includes('-') && !cleanRange.toUpperCase().includes('YEARS') && !cleanRange.toUpperCase().includes('YRS')) {
-        const parts = cleanRange.split('-').map(p => parseFloat(p.trim()));
-        // If simple parsing works (both are numbers)
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            if (result < parts[0]) return { isAbnormal: true, direction: 'low' };
-            if (result > parts[1]) return { isAbnormal: true, direction: 'high' };
-        } else {
-            // Fallback: Try to extract numbers using regex if simple split failed (e.g. "Adult : 70 - 110")
-            const rangeMatch = cleanRange.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
+    else if (cleanRange.includes('-')) {
+        const lines = cleanRange.split(/[\n,;]/);
+        for (const line of lines) {
+            // If this line specifies an age group, but we didn't return early in the age block above,
+            // it means the patient is NOT in this age group. So skip this line!
+            if (/yrs|years|child/i.test(line)) {
+                continue;
+            }
+            
+            const rangeMatch = line.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
             if (rangeMatch) {
                 const min = parseFloat(rangeMatch[1]);
                 const max = parseFloat(rangeMatch[2]);
                 if (result < min) return { isAbnormal: true, direction: 'low' };
                 if (result > max) return { isAbnormal: true, direction: 'high' };
+                return { isAbnormal: false, direction: 'normal' };
             }
         }
     }
