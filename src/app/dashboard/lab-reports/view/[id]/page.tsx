@@ -65,7 +65,7 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
     if (!resultMatch) return { isAbnormal: false, direction: 'normal' };
     const result = parseFloat(resultMatch[0]);
 
-    let cleanRange = rangeStr.trim();
+    let cleanRange = rangeStr.replace(/\\n/g, '\n').trim();
 
     // Handle Gender Specific Ranges (supports "M:", "F:", "Male:", "Female:")
     // Check if range contains gender indicators
@@ -100,7 +100,7 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
 
     // Handle Age Specific Ranges
     if (patientAge !== undefined && patientAge !== null) {
-        const lines = rangeStr.split(/[\n,;]/);
+        const lines = cleanRange.split(/[\n,;]/);
         for (const line of lines) {
             // Check for "min - max yrs" or "min - max years" pattern
             const ageMatch = line.match(/(\d+)\s*[-–]\s*(\d+)\s*(?:yrs|years?)/i);
@@ -131,8 +131,8 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
     }
 
     // Handle complex text-based ranges (e.g. Mantoux: "Lessthan 5 NEGATIVE", "6 - 14 POSITIVE")
-    if (rangeStr.toUpperCase().includes('POSITIVE') || rangeStr.toUpperCase().includes('NEGATIVE')) {
-        const lines = rangeStr.split(/[\n,;]/);
+    if (cleanRange.toUpperCase().includes('POSITIVE') || cleanRange.toUpperCase().includes('NEGATIVE')) {
+        const lines = cleanRange.split(/[\n,;]/);
         // We only care if it falls into a POSITIVE bucket
         for (const line of lines) {
             const upperLine = line.toUpperCase().trim();
@@ -168,8 +168,8 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
     }
 
     // Handle Explicit "Normal", "Desirable", "Optimal" ranges
-    if (/Normal|Desirable|Optimal|Healthy/i.test(rangeStr)) {
-        const lines = rangeStr.split(/[\n,;]/);
+    if (/Normal|Desirable|Optimal|Healthy/i.test(cleanRange)) {
+        const lines = cleanRange.split(/[\n,;]/);
         for (const line of lines) {
             const cleanLine = line.trim();
             if (/Normal|Desirable|Optimal|Healthy/i.test(cleanLine)) {
@@ -199,8 +199,8 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
 
     // Handle Explicit "Low", "High", "Very High" labelled ranges (e.g. Triglycerides)
     // "Normal: <161\nHigh:161-199\nHypertriclyceridemic:200-499\nVery High : >499"
-    if (/High|Low|Critical|Abnormal/i.test(rangeStr)) {
-        const lines = rangeStr.split(/[\n,]/);
+    if (/High|Low|Critical|Abnormal/i.test(cleanRange)) {
+        const lines = cleanRange.split(/[\n,]/);
         for (const line of lines) {
             const cleanLine = line.trim();
             // Check for "High" or "Very High" or "Hypertriclyceridemic"
