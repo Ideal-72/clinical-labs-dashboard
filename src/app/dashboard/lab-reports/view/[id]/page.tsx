@@ -250,29 +250,18 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
     // Handle "min - max" format (e.g., "10.0 - 20.0" or "Healthy Adult : 70 - 110")
 
     // Handle "< max" format (e.g., "< 5.0") or "Lessthan35"
-    if (cleanRange.startsWith('<') || cleanRange.replace(/\s/g, '').toUpperCase().includes('LESSTHAN')) {
-        // Handle "Lessthan35" or "Less than 35"
+    if (/(?:<|LESS\s*THAN)\s*(\d+(\.\d+)?)/i.test(cleanRange)) {
         const lessThanMatch = cleanRange.match(/(?:<|LESS\s*THAN)\s*(\d+(\.\d+)?)/i);
         if (lessThanMatch) {
             const max = parseFloat(lessThanMatch[1]);
             if (!isNaN(max) && result >= max) return { isAbnormal: true, direction: 'high' }; // Generally if range is < max, then >= max is high
         }
-        // Fallback for simple startsWith('<') if regex didn't catch it (though regex covers it)
-        else if (cleanRange.startsWith('<')) {
-            const maxStr = cleanRange.replace('<', '').trim();
-            const maxMatch = maxStr.match(/(\d+(\.\d+)?)/);
-            if (maxMatch) {
-                const max = parseFloat(maxMatch[0]);
-                if (!isNaN(max) && result >= max) return { isAbnormal: true, direction: 'high' };
-            }
-        }
     }
     // Handle "> min" format (e.g., "> 10.0")
-    else if (cleanRange.startsWith('>')) {
-        const minStr = cleanRange.replace('>', '').trim();
-        const minMatch = minStr.match(/(\d+(\.\d+)?)/);
+    else if (/(?:>|MORE\s*THAN)\s*(\d+(\.\d+)?)/i.test(cleanRange)) {
+        const minMatch = cleanRange.match(/(?:>|MORE\s*THAN)\s*(\d+(\.\d+)?)/i);
         if (minMatch) {
-            const min = parseFloat(minMatch[0]);
+            const min = parseFloat(minMatch[1]);
             if (!isNaN(min) && result <= min) return { isAbnormal: true, direction: 'low' };
         }
     }
@@ -283,7 +272,8 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
         for (const line of lines) {
             // If this line specifies an age group, but we didn't return early in the age block above,
             // it means the patient is NOT in this age group. So skip this line!
-            if (/yrs|years|child/i.test(line)) {
+            // However, if the line applies to BOTH adults and children (e.g. "Healthy Adult or children"), do NOT skip it.
+            if (/(yrs|years|child)/i.test(line) && !/adult/i.test(line)) {
                 continue;
             }
             
