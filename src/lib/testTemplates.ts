@@ -267,7 +267,7 @@ export const testTemplates: TestTemplates = {
 
         "Uric Acid": {
             units: "mg/dL",
-            referenceRange: "Male: 3.5-6.0\nFemale: 2.5-6.0",
+            referenceRange: "Male: 3.5-7.2\nFemale: 2.5-6.0",
             specimen: "Serum",
             method: "Uricase/peroxidase",
             clinicalNote: "Uric acid is a waste product from purine metabolism. High levels (hyperuricemia) can cause gout, characterized by painful joint inflammation, especially in the big toe. It may also indicate kidney disease or increased cell turnover. **Low-purine diet and medications can help manage elevated levels.**"
