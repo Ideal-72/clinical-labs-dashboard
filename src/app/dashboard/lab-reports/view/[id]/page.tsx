@@ -215,12 +215,16 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
                     if (result >= min && result <= max) return { isAbnormal: true, direction: 'high' };
                 }
 
-                // Check "> min" e.g. "> 499"
+                // Check "> min" or ">= min"
                 if (cleanLine.includes('>') || cleanLine.includes('More than')) {
                     const minMatch = cleanLine.match(/(\d+(?:\.\d+)?)/);
                     if (minMatch) {
                         const min = parseFloat(minMatch[0]);
-                        if (result > min) return { isAbnormal: true, direction: 'high' };
+                        if (cleanLine.includes('>=')) {
+                            if (result >= min) return { isAbnormal: true, direction: 'high' };
+                        } else {
+                            if (result > min) return { isAbnormal: true, direction: 'high' };
+                        }
                     }
                 }
             }
@@ -235,12 +239,16 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
                     if (result >= min && result <= max) return { isAbnormal: true, direction: 'low' };
                 }
 
-                // Check "< max" e.g. "Low: < 40"
+                // Check "< max" or "<= max"
                 if (cleanLine.includes('<') || cleanLine.includes('Less than')) {
                     const maxMatch = cleanLine.match(/(\d+(?:\.\d+)?)/);
                     if (maxMatch) {
                         const max = parseFloat(maxMatch[0]);
-                        if (result < max) return { isAbnormal: true, direction: 'low' };
+                        if (cleanLine.includes('<=')) {
+                            if (result <= max) return { isAbnormal: true, direction: 'low' };
+                        } else {
+                            if (result < max) return { isAbnormal: true, direction: 'low' };
+                        }
                     }
                 }
             }
@@ -251,18 +259,26 @@ const analyzeResult = (resultStr: string, rangeStr: string, patientSex?: string,
 
     // Handle "< max" format (e.g., "< 5.0") or "Lessthan35"
     if (/(?:<|LESS\s*THAN)\s*(\d+(\.\d+)?)/i.test(cleanRange)) {
-        const lessThanMatch = cleanRange.match(/(?:<|LESS\s*THAN)\s*(\d+(\.\d+)?)/i);
-        if (lessThanMatch) {
-            const max = parseFloat(lessThanMatch[1]);
-            if (!isNaN(max) && result >= max) return { isAbnormal: true, direction: 'high' }; // Generally if range is < max, then >= max is high
+        const lines = cleanRange.split(/[\n,;]/);
+        const matchingLine = lines.find(line => /(?:<|LESS\s*THAN)\s*(\d+(\.\d+)?)/i.test(line));
+        if (matchingLine && !/Low|Decreased/i.test(matchingLine)) {
+            const lessThanMatch = matchingLine.match(/(?:<|LESS\s*THAN)\s*(\d+(\.\d+)?)/i);
+            if (lessThanMatch) {
+                const max = parseFloat(lessThanMatch[1]);
+                if (!isNaN(max) && result >= max) return { isAbnormal: true, direction: 'high' }; // Generally if range is < max, then >= max is high
+            }
         }
     }
     // Handle "> min" format (e.g., "> 10.0")
     else if (/(?:>|MORE\s*THAN)\s*(\d+(\.\d+)?)/i.test(cleanRange)) {
-        const minMatch = cleanRange.match(/(?:>|MORE\s*THAN)\s*(\d+(\.\d+)?)/i);
-        if (minMatch) {
-            const min = parseFloat(minMatch[1]);
-            if (!isNaN(min) && result <= min) return { isAbnormal: true, direction: 'low' };
+        const lines = cleanRange.split(/[\n,;]/);
+        const matchingLine = lines.find(line => /(?:>|MORE\s*THAN)\s*(\d+(\.\d+)?)/i.test(line));
+        if (matchingLine && !/High|Elevated|Increased|Critical/i.test(matchingLine)) {
+            const minMatch = matchingLine.match(/(?:>|MORE\s*THAN)\s*(\d+(\.\d+)?)/i);
+            if (minMatch) {
+                const min = parseFloat(minMatch[1]);
+                if (!isNaN(min) && result <= min) return { isAbnormal: true, direction: 'low' };
+            }
         }
     }
 
